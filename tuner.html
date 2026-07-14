@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panduri Tuner</title>
+    <style>
+        :root {
+            --primary-color: #0b4e6c;
+            --accent-color: #ff6b6b;
+            --success-color: #2ecc71;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --border-color: #dcdde1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin: 0 0 5px 0;
+            font-size: 1.8rem;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+        }
+
+        /* Start button (hidden by default) */
+        .btn-start {
+            display: none;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(11, 78, 108, 0.3);
+            transition: all 0.2s;
+            margin: 0 auto 20px auto;
+        }
+
+        .btn-start:hover {
+            background-color: #083b52;
+            transform: translateY(-1px);
+        }
+
+        /* Panduri strings */
+        .strings-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+            gap: 10px;
+        }
+
+        .string-card {
+            flex: 1;
+            padding: 15px 5px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            background: #fafbfc;
+            transition: all 0.2s;
+        }
+
+        .string-card.active {
+            border-color: var(--primary-color);
+            background: rgba(11, 78, 108, 0.05);
+            transform: scale(1.05);
+        }
+
+        .string-card.in-tune {
+            border-color: var(--success-color);
+            background: rgba(46, 204, 113, 0.1);
+        }
+
+        .string-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .string-desc {
+            font-size: 0.75rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        /* Visual gauge (needle) */
+        .gauge-container {
+            position: relative;
+            width: 100%;
+            height: 80px;
+            background: #eee;
+            border-radius: 8px;
+            margin: 25px 0;
+            overflow: hidden;
+        }
+
+        .gauge-center {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: var(--success-color);
+            transform: translateX(-50%);
+            z-index: 2;
+        }
+
+        .gauge-needle {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: var(--accent-color);
+            left: 50%;
+            transform: translateX(-50%);
+            transition: left 0.1s ease-out;
+            z-index: 3;
+        }
+
+        .gauge-labels {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            color: #95a5a6;
+        }
+
+        /* Цифровые значения */
+        .frequency-display {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-top: 10px;
+            font-family: monospace;
+        }
+
+        .cents-display {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #7f8c8d;
+            margin-top: 5px;
+            height: 20px;
+        }
+
+        .status-text {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 15px;
+            min-height: 25px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Panduri Tuner</h1>
+        <p class="subtitle">Standard tuning: E4 — C#4 — A3</p>
+
+        <button class="btn-start" id="start-btn">Start tuner manually</button>
+
+        <div class="strings-container">
+            <div class="string-card" id="string-3">
+                <div class="string-name">A3</div>
+                <div class="string-desc">3rd string (low)<br>220.00 Hz</div>
+            </div>
+            <div class="string-card" id="string-2">
+                <div class="string-name">C#4</div>
+                <div class="string-desc">2nd string (middle)<br>277.18 Hz</div>
+            </div>
+            <div class="string-card" id="string-1">
+                <div class="string-name">E4</div>
+                <div class="string-desc">1st string (high)<br>329.63 Hz</div>
+            </div>
+        </div>
+
+        <div class="gauge-container">
+            <div class="gauge-center"></div>
+            <div class="gauge-needle" id="needle"></div>
+        </div>
+        <div class="gauge-labels">
+            <span>FLAT (Low)</span>
+            <span>IN TUNE</span>
+            <span>SHARP (High)</span>
+        </div>
+
+        <div class="frequency-display" id="freq-val">--.-- Hz</div>
+        <div class="cents-display" id="cents-val"></div>
+        <div class="status-text" id="status-text">Initializing microphone...</div>
+    </div>
+
+    <script>
+        const TARGET_STRINGS = [
+            { id: 'string-1', name: 'E4', freq: 329.63 },
+            { id: 'string-2', name: 'C#4', freq: 277.18 },
+            { id: 'string-3', name: 'A3', freq: 220.00 }
+        ];
+
+        let audioCtx = null;
+        let analyser = null;
+        let micStream = null;
+        let isRunning = false;
+        const buflen = 2048;
+        const buf = new Float32Array(buflen);
+
+        const startBtn = document.getElementById('start-btn');
+        const needle = document.getElementById('needle');
+        const freqVal = document.getElementById('freq-val');
+        const centsVal = document.getElementById('cents-val');
+        const statusText = document.getElementById('status-text');
+
+        // Audio initialization function
+        async function initAudio() {
+            try {
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Fix for Safari where AudioContext starts suspended
+                if (audioCtx.state === 'suspended') {
+                    startBtn.style.display = 'block';
+                    statusText.textContent = 'Press the button to activate the tuner';
+                    return;
+                }
+
+                setupAnalyser();
+            } catch (err) {
+                console.warn('Auto-start failed:', err);
+                startBtn.style.display = 'block';
+                statusText.textContent = 'Microphone permission is required';
+            }
+        }
+
+        function setupAnalyser() {
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = buflen;
+            
+            const source = audioCtx.createMediaStreamSource(micStream);
+            source.connect(analyser);
+
+            isRunning = true;
+            startBtn.style.display = 'none'; // Hide the button once tuner runs automatically
+            statusText.textContent = 'Play a string...';
+            
+            updatePitch();
+        }
+
+        // Manual start (if auto-start is blocked by the browser)
+        startBtn.addEventListener('click', async () => {
+            if (audioCtx && audioCtx.state === 'suspended') {
+                await audioCtx.resume();
+                setupAnalyser();
+                return;
+            }
+            await initAudio();
+        });
+
+        // Autocorrelation algorithm
+        function autoCorrelate(buffer, sampleRate) {
+            let sumOfSquares = 0;
+            for (let i = 0; i < buffer.length; i++) {
+                sumOfSquares += buffer[i] * buffer[i];
+            }
+            let rms = Math.sqrt(sumOfSquares / buffer.length);
+            if (rms < 0.015) return -1;
+
+            let r1 = 0;
+            let r2 = buffer.length - 1;
+            let threshold = 0.2;
+            for (let i = 0; i < buffer.length / 2; i++) {
+                if (Math.abs(buffer[i]) < threshold) { r1 = i; break; }
+            }
+            for (let i = buffer.length - 1; i >= buffer.length / 2; i--) {
+                if (Math.abs(buffer[i]) < threshold) { r2 = i; break; }
+            }
+
+            const activeBuffer = buffer.slice(r1, r2);
+            const size = activeBuffer.length;
+
+            const c = new Float32Array(size);
+            for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size - i; j++) {
+                    c[i] = c[i] + activeBuffer[j] * activeBuffer[j + i];
+                }
+            }
+
+            let d = 0;
+            while (c[d] > c[d + 1]) d++;
+
+            let maxValue = -1;
+            let maxPosition = -1;
+            for (let i = d; i < size; i++) {
+                if (c[i] > maxValue) {
+                    maxValue = c[i];
+                    maxPosition = i;
+                }
+            }
+
+            let period = maxPosition;
+
+            if (maxPosition > 0 && maxPosition < size - 1) {
+                const alpha = c[maxPosition - 1];
+                const beta = c[maxPosition];
+                const gamma = c[maxPosition + 1];
+                const p = 0.5 * (alpha - gamma) / (alpha - 2 * beta + gamma);
+                period = maxPosition + p;
+            }
+
+            return sampleRate / period;
+        }
+
+        // Update loop
+        function updatePitch() {
+            if (!isRunning) return;
+
+            // FIXED: Safe retrieval of time-domain data
+            if (analyser.getFloat32TimeDomainData) {
+                analyser.getFloat32TimeDomainData(buf);
+            } else if (analyser.getByteTimeDomainData) {
+                // Fallback method for older platforms/browsers
+                const byteBuf = new Uint8Array(buflen);
+                analyser.getByteTimeDomainData(byteBuf);
+                for (let i = 0; i < buflen; i++) {
+                    buf[i] = (byteBuf[i] - 128) / 128;
+                }
+            } else {
+                statusText.textContent = 'Error: browser does not support audio data reading';
+                return;
+            }
+
+            const pitch = autoCorrelate(buf, audioCtx.sampleRate);
+
+            if (pitch !== -1 && pitch > 150 && pitch < 400) {
+                freqVal.textContent = pitch.toFixed(2) + ' Hz';
+
+                let closestString = TARGET_STRINGS[0];
+                let minDiff = Math.abs(pitch - closestString.freq);
+
+                TARGET_STRINGS.forEach(s => {
+                    const diff = Math.abs(pitch - s.freq);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        closestString = s;
+                    }
+                });
+
+                const cents = 1200 * Math.log2(pitch / closestString.freq);
+                centsVal.textContent = (cents >= 0 ? '+' : '') + cents.toFixed(0) + ' cents';
+
+                let visualPercentage = 50 + (cents * 1.2); 
+                visualPercentage = Math.max(5, Math.min(95, visualPercentage)); 
+                needle.style.left = visualPercentage + '%';
+
+                TARGET_STRINGS.forEach(s => {
+                    const card = document.getElementById(s.id);
+                    if (s.id === closestString.id) {
+                        if (Math.abs(cents) <= 3) {
+                            card.className = 'string-card active in-tune';
+                            statusText.textContent = 'Perfect!';
+                            statusText.style.color = 'var(--success-color)';
+                        } else {
+                            card.className = 'string-card active';
+                            statusText.textContent = cents > 0 ? 'Too sharp (loosen the string)' : 'Too flat (tighten the string)';
+                            statusText.style.color = cents > 0 ? 'var(--accent-color)' : 'var(--primary-color)';
+                        }
+                    } else {
+                        card.className = 'string-card';
+                    }
+                });
+            }
+
+            requestAnimationFrame(updatePitch);
+        }
+
+        // Try to initialize the microphone automatically when the page loads
+        window.addEventListener('DOMContentLoaded', initAudio);
+    </script>
+</body>
+</html>

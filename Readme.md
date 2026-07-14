@@ -8,7 +8,10 @@ This project contains a set of web-based chord tools for the Panduri instrument.
 - `progressions_calculated.html` - Creates random chord progressions and calculates the best Panduri fingering for each chord.
 - `progressions_images.html` - Shows random chord progressions as chord image cards with shareable hash links.
 - `progressions_with_start.html` - Lets the user choose a starting chord and shows harmonically related progressions.
-- `songbook.html` - Parses pasted song text or chord lists, highlights chords inline, and displays chord images in a sidebar. Example format of song: 
+- `songbook.html` - Parses pasted song text or chord lists, highlights chords inline, and displays chord images in a sidebar.
+- `tuner.html` - Provides a simple Panduri tuner for the standard E4–C#4–A3 tuning, showing frequency, cent deviation, and string match feedback.
+
+Example format of song: 
 ```
 La Bamba Accordi da Ritchie Valens
 
