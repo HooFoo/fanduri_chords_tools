@@ -239,17 +239,26 @@
             const sidebarChords = document.getElementById('sidebar-chords');
 
             // Regular expression for finding chords
-            const chordRegex = /\b[A-G][b#]?(?:m|m7|maj7|7|dim|sus4)?\b/g;
+            const chordRegex = /\b[A-G](?:#|b)?(?:maj7|sus4|m7|dim|7|m)?\b/gi;
 
-            function getCleanChordName(chord) {
-                let clean = chord.toLowerCase();
-                clean = clean.replace('#', 's');
-                clean = clean.replace('_', 's');
-                return clean;
-            }
+            function normalizeChord(chord) {
+                if (!chord) return { fileName: '', displayName: '' };
 
-            function formatChordDisplay(chord) {
-                return chord.replace('_', '#').toUpperCase();
+                const root = chord[0].toUpperCase();
+                let accidental = '';
+                let remainder = chord.slice(1);
+
+                if (remainder[0] === '#' || remainder[0] === 'b') {
+                    accidental = remainder[0];
+                    remainder = remainder.slice(1);
+                }
+
+                const fileRoot = root + (accidental === '#' ? '_' : (accidental === 'b' ? 'b' : ''));
+                const fileName = fileRoot + remainder;
+                const displayRoot = root + (accidental === '#' ? '#' : (accidental === 'b' ? 'b' : ''));
+                const displayName = displayRoot + remainder;
+
+                return { fileName, displayName };
             }
 
             function parseAndRender() {
@@ -267,12 +276,12 @@
                 // Populate the sidebar
                 sidebarChords.innerHTML = '';
                 uniqueChords.forEach(chord => {
-                    const imgName = getCleanChordName(chord);
+                    const { fileName, displayName } = normalizeChord(chord);
                     const card = document.createElement('div');
                     card.className = 'sidebar-card';
                     card.innerHTML = `
-                        <div class="sidebar-card-name">${formatChordDisplay(chord)}</div>
-                        <img src="images/${imgName}.png" alt="${chord}" onerror="this.style.display='none';">
+                        <div class="sidebar-card-name">${displayName}</div>
+                        <img src="images/${fileName}.png" alt="${displayName}" onerror="this.style.display='none';">
                     `;
                     sidebarChords.appendChild(card);
                 });
@@ -286,8 +295,8 @@
 
                     // Replace chords with inline elements and tooltips
                     return line.replace(chordRegex, (match) => {
-                        const imgName = getCleanChordName(match);
-                        return `<span class="chord-link">${match}<span class="chord-tooltip"><img src="images/${imgName}.png" alt="${match}" onerror="this.style.display='none';"></span></span>`;
+                        const { fileName, displayName } = normalizeChord(match);
+                        return `<span class="chord-link">${displayName}<span class="chord-tooltip"><img src="images/${fileName}.png" alt="${displayName}" onerror="this.style.display='none';"></span></span>`;
                     });
                 });
 

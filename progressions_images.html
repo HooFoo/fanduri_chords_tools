@@ -189,6 +189,11 @@
             return name.replace('_', '#').toUpperCase();
         }
 
+        function getImageFileName(chord) {
+            if (!chord) return '';
+            return chord.charAt(0).toUpperCase() + chord.slice(1);
+        }
+
         // Generate a random progression
         function randChords() {
             const chordsContainer = document.getElementById('chords');
@@ -212,9 +217,10 @@
                 currentProg.forEach(chord => {
                     const li = document.createElement('li');
                     li.className = 'chord-card';
+                    const imageName = getImageFileName(chord);
                     li.innerHTML = `
                         <div class="chord-name">${formatChordName(chord)}</div>
-                        <img src="images/${chord}.png" alt="${chord}">
+                        <img src="images/${imageName}.png" alt="${chord}">
                     `;
                     chordsContainer.appendChild(li);
                 });
@@ -235,9 +241,10 @@
             urlSplit.forEach(chord => {
                 const li = document.createElement('li');
                 li.className = 'chord-card';
+                const imageName = getImageFileName(chord);
                 li.innerHTML = `
                     <div class="chord-name">${formatChordName(chord)}</div>
-                    <img src="images/${chord}.png" alt="${chord}">
+                    <img src="images/${imageName}.png" alt="${chord}">
                 `;
                 chordsContainer.appendChild(li);
             });
