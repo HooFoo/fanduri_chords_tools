@@ -1,4 +1,6 @@
-# Fanduri Chords Project
+# [Try it!](https://hoofoo.github.io/fanduri_chords_tools/)
+
+# Fanduri Chords Tools
 
 This project contains a set of web-based chord tools for the Panduri instrument.
 
