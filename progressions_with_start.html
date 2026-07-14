@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harmonious Chord Selector</title>
+    <style>
+        :root {
+            --primary-color: #0b4e6c;
+            --accent-color: #ff6b6b;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .wrap {
+            width: 100%;
+            max-width: 900px;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-top: 20px;
+            margin-bottom: 5px;
+            font-size: 2.2rem;
+            font-weight: 800;
+        }
+
+        .which {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        /* Start chord selection grid */
+        #allchords {
+            list-style: none;
+            padding: 0;
+            margin: 0 auto 40px auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 12px;
+            max-width: 700px;
+        }
+
+        #allchords li {
+            background: var(--card-bg);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 12px 5px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        #allchords li:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+            border-color: #b0c4de;
+        }
+
+        #allchords li.on {
+            background-color: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(11, 78, 108, 0.3);
+        }
+
+        /* Results section */
+        .thechords {
+            margin-top: 20px;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.4s ease, max-height 0.4s ease;
+        }
+
+        .thechords.show {
+            opacity: 1;
+            max-height: 2000px; /* Enough space for expansion */
+        }
+
+        .thechords h2 {
+            color: var(--primary-color);
+            font-size: 1.6rem;
+            margin-bottom: 30px;
+        }
+
+        /* Harmonious chord list */
+        #chords {
+            list-style: none;
+            padding: 0;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            transition: opacity 0.25s ease-in-out;
+        }
+
+        #chords li {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            padding: 15px;
+            display: none; /* Controlled via JS */
+            flex-direction: column;
+            align-items: center;
+            width: 140px;
+            box-sizing: border-box;
+            transition: transform 0.2s ease;
+        }
+
+        #chords li:hover {
+            transform: translateY(-5px);
+        }
+
+        #chords img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 4px;
+        }
+
+        /* Auxiliary buttons */
+        .mtryagain {
+            background-color: #7f8c8d;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-top: 40px;
+            margin-bottom: 40px;
+            transition: background-color 0.2s;
+        }
+
+        .mtryagain:hover {
+            background-color: #616d6e;
+        }
+    </style>
+</head>
+<body>
+
+    <section class="wrap">
+        <h1>Harmonious Chord Generator</h1>
+        <p class="which">Which chord would you like to start from?</p>
+        
+        <ul id="allchords">
+            <li data-rel="c">C</li>
+            <li data-rel="g">G</li>
+            <li data-rel="d">D</li>
+            <li data-rel="a">A</li>
+            <li data-rel="e">E</li>
+            <li data-rel="b">B/Cb</li>
+            <li data-rel="gb">Gb/F#</li>
+            <li data-rel="db" class="on">Db/C#</li>
+            <li data-rel="ab">Ab</li>
+            <li data-rel="eb">Eb</li>
+            <li data-rel="bb">Bb</li>
+            <li data-rel="f">F</li>
+            <li data-rel="c">Am</li>
+            <li data-rel="g">Em</li>
+            <li data-rel="d">Bm</li>
+            <li data-rel="a">F#m</li>
+            <li data-rel="e">C#m</li>
+            <li data-rel="b">G#m</li>
+            <li data-rel="gb">Ebm</li>
+            <li data-rel="db">Bbm</li>
+            <li data-rel="ab">Fm</li>
+            <li data-rel="eb">Cm</li>
+            <li data-rel="bb">Gm</li>
+            <li data-rel="f">Dm</li>
+        </ul>
+
+        <section class="thechords" id="solution">
+            <h2>These chords sound great together:</h2>
+            <ul id="chords">
+                <li class="c f g"><img src="images/c.png" alt="C Chord"></li>
+                <li class="g c d"><img src="images/g.png" alt="G Chord"></li>
+                <li class="d g a"><img src="images/d.png" alt="D Chord"></li>
+                <li class="a d e"><img src="images/a.png" alt="A Chord"></li>
+                <li class="e a b"><img src="images/e.png" alt="E Chord"></li>
+                <li class="b e gb"><img src="images/b.png" alt="B Chord"></li>
+                <li class="gb b db"><img src="images/gb.png" alt="Gb Chord"></li>
+                <li class="db gb ab"><img src="images/db.png" alt="Db Chord"></li>
+                <li class="ab db eb"><img src="images/ab.png" alt="Ab Chord"></li>
+                <li class="eb ab bb"><img src="images/eb.png" alt="Eb Chord"></li>
+                <li class="bb f eb"><img src="images/bb.png" alt="Bb Chord"></li>
+                <li class="f bb c"><img src="images/f.png" alt="F Chord"></li>
+                
+                <li class="c f g"><img src="images/am.png" alt="Am Chord"></li>
+                <li class="c g d"><img src="images/em.png" alt="Em Chord"></li>
+                <li class="g d a"><img src="images/bm.png" alt="Bm Chord"></li>
+                <li class="d a e"><img src="images/f_m.png" alt="F#m Chord"></li>
+                <li class="a e b"><img src="images/c_m.png" alt="C#m Chord"></li>
+                <li class="e b gb"><img src="images/g_m.png" alt="G#m Chord"></li>
+                <li class="b gb db"><img src="images/ebm.png" alt="Ebm Chord"></li>
+                <li class="gb db ab"><img src="images/bbm.png" alt="Bbm Chord"></li>
+                <li class="ab db eb"><img src="images/fm.png" alt="Fm Chord"></li>
+                <li class="bb eb ab"><img src="images/cm.png" alt="Cm Chord"></li>
+                <li class="eb bb f"><img src="images/gm.png" alt="Gm Chord"></li>
+                <li class="f c bb"><img src="images/dm.png" alt="Dm Chord"></li>
+            </ul>
+
+            <button class="mtryagain">Choose a different starting chord</button>
+        </section>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const allChordsList = document.getElementById('allchords');
+            const solutionSection = document.getElementById('solution');
+            const chordsContainer = document.getElementById('chords');
+            const resultItems = chordsContainer.querySelectorAll('li');
+            const tryAgainBtn = document.querySelector('.mtryagain');
+
+            // Function to switch displayed chords
+            function filterChords(selectedClass) {
+                // Smooth fade-out of the container
+                chordsContainer.style.opacity = '0';
+
+                setTimeout(() => {
+                    resultItems.forEach(item => {
+                        // If the item has the selected key class
+                        if (item.classList.contains(selectedClass)) {
+                            item.style.display = 'flex';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+
+                    // Show the results block
+                    solutionSection.classList.add('show');
+                    
+                    // Smooth appearance of filtered images
+                    chordsContainer.style.opacity = '1';
+
+                    // Soft scroll to the result
+                    solutionSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 200);
+            }
+
+            // Handler for start chord click
+            allChordsList.addEventListener('click', (e) => {
+                const clickedLi = e.target.closest('li');
+                if (!clickedLi) return;
+
+                // Remove active class from all items and set it on the clicked one
+                allChordsList.querySelectorAll('li').forEach(li => li.classList.remove('on'));
+                clickedLi.classList.add('on');
+
+                const selectedClass = clickedLi.getAttribute('data-rel');
+                filterChords(selectedClass);
+            });
+
+            // "Start again" button (scroll up)
+            tryAgainBtn.addEventListener('click', () => {
+                document.querySelector('.which').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+
+            // Default initialization for the preselected chord (e.g. Db/C#)
+            const defaultSelected = allChordsList.querySelector('.on');
+            if (defaultSelected) {
+                const selectedClass = defaultSelected.getAttribute('data-rel');
+                // Slightly delay first render to avoid scroll conflict on page load
+                setTimeout(() => {
+                    filterChords(selectedClass);
+                }, 300);
+            }
+        });
+    </script>
+</body>
+</html>

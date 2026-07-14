@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Songbook and Chord Generator</title>
+<style>
+        :root {
+            --primary-color: #0b4e6c;
+            --accent-color: #ff6b6b;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --border-color: #dcdde1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin: 10px 0 5px 0;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin: 0 0 20px 0;
+            font-size: 0.95rem;
+        }
+
+        .input-section {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+            resize: vertical;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            border-color: var(--primary-color);
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 20px;
+            align-items: start;
+        }
+
+        @media (max-width: 768px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .song-display {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            min-height: 200px;
+            box-sizing: border-box;
+        }
+
+        /* Song text must stay monospaced and preserve whitespace */
+        .song-text {
+            white-space: pre;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.05rem;
+            line-height: 1.5;
+            overflow-x: auto;
+        }
+
+        /* FIXED: links inside a monospaced string */
+        .chord-link {
+            color: var(--primary-color);
+            font-weight: bold;
+            text-decoration: none;
+            border-bottom: 1px dashed var(--primary-color);
+            cursor: pointer;
+            position: relative;
+            /* inline preserves original width and surrounding spaces */
+            display: inline; 
+        }
+
+        .chord-link:hover {
+            background-color: rgba(11, 78, 108, 0.1);
+        }
+
+        /* Tooltip popup over the chord */
+        .chord-tooltip {
+            visibility: hidden;
+            position: absolute;
+            bottom: 140%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--card-bg);
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            z-index: 100;
+            width: 90px;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            opacity: 0;
+            pointer-events: none;
+            font-family: sans-serif; /* so tooltip text is not monospaced */
+        }
+
+        .chord-link:hover .chord-tooltip {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(-5px);
+        }
+
+        .chord-tooltip img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .section-header {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .sidebar {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+            position: sticky;
+            top: 20px;
+        }
+
+        .sidebar h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 10px;
+        }
+
+        .sidebar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 15px;
+        }
+
+        .sidebar-card {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            background: #fff;
+        }
+
+        .sidebar-card-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .sidebar-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Interactive Songbook</h1>
+        <p class="subtitle">Paste song lyrics with chords or just a chord list separated by spaces</p>
+
+        <div class="input-section">
+            <textarea id="song-input" placeholder="Paste chords here (e.g. Am F C E) or a song with chord markings..."></textarea>
+        </div>
+
+        <div class="workspace">
+            <div class="song-display">
+                <div class="song-text" id="song-output">Formatted song text will appear here...</div>
+            </div>
+
+            <div class="sidebar">
+                <h3>Used Chords</h3>
+                <div class="sidebar-grid" id="sidebar-chords">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const songInput = document.getElementById('song-input');
+            const songOutput = document.getElementById('song-output');
+            const sidebarChords = document.getElementById('sidebar-chords');
+
+            // Regular expression for finding chords
+            const chordRegex = /\b[A-G][b#]?(?:m|m7|maj7|7|dim|sus4)?\b/g;
+
+            function getCleanChordName(chord) {
+                let clean = chord.toLowerCase();
+                clean = clean.replace('#', 's');
+                clean = clean.replace('_', 's');
+                return clean;
+            }
+
+            function formatChordDisplay(chord) {
+                return chord.replace('_', '#').toUpperCase();
+            }
+
+            function parseAndRender() {
+                const text = songInput.value;
+                if (!text.trim()) {
+                    songOutput.innerHTML = '<span style="color: #95a5a6;">Formatted song text will appear here...</span>';
+                    sidebarChords.innerHTML = '';
+                    return;
+                }
+
+                // Find unique chords
+                const foundChords = text.match(chordRegex) || [];
+                const uniqueChords = [...new Set(foundChords)];
+
+                // Populate the sidebar
+                sidebarChords.innerHTML = '';
+                uniqueChords.forEach(chord => {
+                    const imgName = getCleanChordName(chord);
+                    const card = document.createElement('div');
+                    card.className = 'sidebar-card';
+                    card.innerHTML = `
+                        <div class="sidebar-card-name">${formatChordDisplay(chord)}</div>
+                        <img src="images/${imgName}.png" alt="${chord}" onerror="this.style.display='none';">
+                    `;
+                    sidebarChords.appendChild(card);
+                });
+
+                // Process text lines
+                const lines = text.split('\n');
+                const processedLines = lines.map(line => {
+                    if (line.trim().startsWith('[') && line.trim().endsWith(']')) {
+                        return `<span class="section-header">${line}</span>`;
+                    }
+
+                    // Replace chords with inline elements and tooltips
+                    return line.replace(chordRegex, (match) => {
+                        const imgName = getCleanChordName(match);
+                        return `<span class="chord-link">${match}<span class="chord-tooltip"><img src="images/${imgName}.png" alt="${match}" onerror="this.style.display='none';"></span></span>`;
+                    });
+                });
+
+                songOutput.innerHTML = processedLines.join('\n');
+                updateURLHash(text);
+            }
+
+            function updateURLHash(text) {
+                try {
+                    const base64 = btoa(unescape(encodeURIComponent(text)));
+                    history.replaceState(null, null, '#data=' + base64);
+                } catch (e) {
+                    console.error("URL encoding error:", e);
+                }
+            }
+
+            function readURLHash() {
+                const hash = window.location.hash;
+                if (hash && hash.startsWith('#data=')) {
+                    try {
+                        const base64 = hash.replace('#data=', '');
+                        const decodedText = decodeURIComponent(escape(atob(base64)));
+                        songInput.value = decodedText;
+                        parseAndRender();
+                    } catch (e) {
+                        console.error("URL decoding error:", e);
+                    }
+                }
+            }
+
+            songInput.addEventListener('input', parseAndRender);
+            readURLHash();
+        });
+    </script>
+</body>
+</html>

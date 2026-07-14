@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chord Progression Generator</title>
+    <style>
+        :root {
+            --primary-color: #0b4e6c;
+            --accent-color: #ff6b6b;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .wrap {
+            width: 100%;
+            max-width: 1100px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-grow: 1;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-top: 20px;
+            margin-bottom: 5px;
+            font-size: 2.2rem;
+            font-weight: 800;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+
+        /* Chord progression list */
+        #chords {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0 40px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            width: 100%;
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        /* Chord card */
+        .chord-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            padding: 20px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 150px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .chord-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .chord-name {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .chord-card img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 4px;
+        }
+
+        /* Button */
+        .randomise {
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(11, 78, 108, 0.3);
+            transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+            outline: none;
+            margin-bottom: 40px;
+        }
+
+        .randomise:hover {
+            background-color: #083b52;
+            box-shadow: 0 8px 20px rgba(11, 78, 108, 0.4);
+        }
+
+        .randomise:active {
+            transform: scale(0.97);
+        }
+
+        .hotkey-tip {
+            font-size: 0.85rem;
+            color: #95a5a6;
+            margin-top: -30px;
+            margin-bottom: 40px;
+        }
+
+        /* Fade effect during transition */
+        .fade-out {
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <section class="wrap">
+        <h1>Chord Progressions</h1>
+        <p class="subtitle">Interactive progression generator for practice</p>
+        
+        <ul id="chords">
+            </ul>
+        
+        <button class="randomise">Pick Random</button>
+        <div class="hotkey-tip">Or press <strong>Enter</strong> / <strong>Right Arrow</strong></div>
+    </section>
+
+    <script>
+        // Original progression array
+        const ALL_PROGRESSIONS = [
+            ['a','d','a','e7'],
+            ['a7','d7','a7','e7','d7','a7'],
+            ['am','c','d','f','am','e7','am'],
+            ['am','c','dm','am','e7','am'],
+            ['am','e7','g','d','f','c','dm','e7'],
+            ['a','d','e7','a','f_m','d','g'],
+            ['bb','g7','c7','f7'],
+            ['b7','em','cm','g'],
+            ['c','edim','f','g7'],
+            ['c','am','f','g7'],
+            ['c','e7','f','fm'],
+            ['c','a7','d7','g','c'],
+            ['c','e7','f','fm','c','g7','c','g7','c'],
+            ['c','c7','f','fm','c'],
+            ['c','g','am','f'],
+            ['c','f','d7','g'],
+            ['dm','gm','a','f','bb','e7','a'],
+            ['dm', 'c', 'bb', 'a'],
+            ['dm','g7','c','am','f','dm','bb','g7'],
+            ['d','bm','em','a'],
+            ['em','b7','bm7','a','c','g','a','b7'],
+            ['em','c','g','d'],
+            ['em','g','d','c'],
+            ['f','dm','bb','c'],
+            ['f','a7','dm','f7','bb','bbm','f','c7'],
+            ['g7','c','am','e7'],
+            ['g','e','a','d'],
+            ['gm','f','eb','d'],
+            ['gm','cm','d7']
+        ];
+
+        let availableProgressions = [...ALL_PROGRESSIONS];
+        let usedProgressions = [];
+
+        // Nicely format chord names (e.g. f_m becomes F#m for display)
+        function formatChordName(name) {
+            return name.replace('_', '#').toUpperCase();
+        }
+
+        // Generate a random progression
+        function randChords() {
+            const chordsContainer = document.getElementById('chords');
+
+            if (availableProgressions.length === 0) {
+                availableProgressions = [...usedProgressions];
+                usedProgressions = [];
+            }
+
+            // Pick a random item
+            const randomIndex = Math.floor(Math.random() * availableProgressions.length);
+            const currentProg = availableProgressions.splice(randomIndex, 1)[0];
+            usedProgressions.push(currentProg);
+
+            // Fade animation
+            chordsContainer.classList.add('fade-out');
+            
+            setTimeout(() => {
+                chordsContainer.innerHTML = '';
+                
+                currentProg.forEach(chord => {
+                    const li = document.createElement('li');
+                    li.className = 'chord-card';
+                    li.innerHTML = `
+                        <div class="chord-name">${formatChordName(chord)}</div>
+                        <img src="images/${chord}.png" alt="${chord}">
+                    `;
+                    chordsContainer.appendChild(li);
+                });
+
+                chordsContainer.classList.remove('fade-out');
+                
+                // Update the hash in the browser URL
+                const urlString = currentProg.join("-");
+                history.pushState(null, null, '#' + urlString);
+            }, 200);
+        }
+
+        // Render from hash (if opened via shared link)
+        function queryChords(urlSplit) {
+            const chordsContainer = document.getElementById('chords');
+            chordsContainer.innerHTML = '';
+            
+            urlSplit.forEach(chord => {
+                const li = document.createElement('li');
+                li.className = 'chord-card';
+                li.innerHTML = `
+                    <div class="chord-name">${formatChordName(chord)}</div>
+                    <img src="images/${chord}.png" alt="${chord}">
+                `;
+                chordsContainer.appendChild(li);
+            });
+        }
+
+        // --- Event handlers ---
+
+        // Button clicks
+        document.querySelector('.randomise').addEventListener('click', () => {
+            randChords();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Enter or Right Arrow key press
+        document.body.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === 'ArrowRight') {
+                randChords();
+            }
+        });
+
+        // Initialization on start
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.location.hash) {
+                const urlRef = window.location.hash.substring(1);
+                const urlSplit = urlRef.split("-");
+                queryChords(urlSplit);
+            } else {
+                randChords();
+            }
+        });
+
+        // Browser back/forward history handling
+        window.onpopstate = function () {
+            if (window.location.hash) {
+                const urlRef = window.location.hash.substring(1);
+                const urlSplit = urlRef.split("-");
+                queryChords(urlSplit);
+            }
+        };
+    </script>
+</body>
+</html>

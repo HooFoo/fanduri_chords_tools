@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panduri Chord Calculator</title>
+    <style>
+        :root {
+            --primary-color: #0b4e6c;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            margin-top: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .controls {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        label {
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+
+        select, input {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .chord-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .chord-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .chord-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+        }
+
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            font-size: 1.1rem;
+            color: #888;
+            padding: 40px;
+        }
+
+        svg {
+            background: #fff;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Panduri Chord Calculator</h1>
+    <p class="subtitle">Standard tuning: E4 (1st) — C#4 (2nd) — A3 (3rd)</p>
+
+    <div class="controls">
+        <label>
+            Root Note
+            <select id="root-note">
+                <option value="A">A (La)</option>
+                <option value="A#">A# / Bb</option>
+                <option value="B">B (Ti)</option>
+                <option value="C">C (Do)</option>
+                <option value="C#">C# / Db</option>
+                <option value="D">D (Re)</option>
+                <option value="D#">D# / Eb</option>
+                <option value="E">E (Mi)</option>
+                <option value="F">F (Fa)</option>
+                <option value="F#">F# / Gb</option>
+                <option value="G">G (Sol)</option>
+                <option value="G#">G# / Ab</option>
+            </select>
+        </label>
+
+        <label>
+            Chord Type
+            <select id="chord-type">
+                <option value="maj">Major (dur)</option>
+                <option value="min">Minor (m)</option>
+                <option value="7">Dominant seventh (7)</option>
+                <option value="m7">Minor seventh (m7)</option>
+                <option value="maj7">Major seventh (maj7)</option>
+                <option value="dim">Diminished (dim)</option>
+                <option value="sus4">sus4</option>
+            </select>
+        </label>
+
+        <label>
+            Max stretch (frets)
+            <input type="number" id="stretch-limit" value="3" min="1" max="6" style="width: 60px;">
+        </label>
+    </div>
+
+    <div class="grid" id="chords-container"></div>
+
+    <script>
+        // Chromatic scale
+        const NOTES = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"];
+
+        // Panduri tuning (left to right: 3rd string -> 2nd string -> 1st string)
+        // 3rd string: A3, 2nd string: C#4, 1st string: E4
+        const TUNING = ["A", "C#", "E"]; 
+
+        // Chord interval formulas (semitones from the root)
+        const CHORD_FORMULAS = {
+            "maj": [0, 4, 7],      // Root, major third, fifth
+            "min": [0, 3, 7],      // Root, minor third, fifth
+            "7": [0, 4, 7, 10],    // Root, major third, fifth, minor seventh
+            "m7": [0, 3, 7, 10],   // Root, minor third, fifth, minor seventh
+            "maj7": [0, 4, 7, 11], // Root, major third, fifth, major seventh
+            "dim": [0, 3, 6],      // Root, minor third, diminished fifth
+            "sus4": [0, 5, 7]      // Root, perfect fourth, fifth
+        };
+
+        const TUNING_MIDI = [57, 61, 64]; 
+        const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+        // Get the notes in the chord
+        function getChordNotes(root, type) {
+            const rootIdx = NOTES.indexOf(root);
+            const intervals = CHORD_FORMULAS[type];
+            return intervals.map(interval => NOTES[(rootIdx + interval) % 12]);
+        }
+
+        // Get the note on a string at a given fret
+        function getNoteAtFret(openNote, fret) {
+            const openIdx = NOTES.indexOf(openNote);
+            return NOTES[(openIdx + fret) % 12];
+        }
+
+        // Generate all possible chord shapes (12 frets)
+        function generateChords(root, type, maxStretch) {
+            const chordNotes = getChordNotes(root, type);
+            const validChords = [];
+
+            // Test all fret combinations for 3 strings (from 0 to 12)
+            for (let f3 = 0; f3 <= 12; f3++) { // Left string (A)
+                const n3 = getNoteAtFret(TUNING[0], f3);
+                if (!chordNotes.includes(n3)) continue;
+
+                for (let f2 = 0; f2 <= 12; f2++) { // Middle string (C#)
+                    const n2 = getNoteAtFret(TUNING[1], f2);
+                    if (!chordNotes.includes(n2)) continue;
+
+                    for (let f1 = 0; f1 <= 12; f1++) { // Right string (E)
+                        const n1 = getNoteAtFret(TUNING[2], f1);
+                        if (!chordNotes.includes(n1)) continue;
+
+                                    // Check that all chord notes are present (or at least the essentials for 4-note chords)
+                        const uniqueNotesInCombination = new Set([n1, n2, n3]);
+                        
+                        // For triads (3 notes), all notes must be present.
+                        // For seventh chords (4 notes), all 4 cannot fit on 3 strings physically, so the fifth may be omitted.
+                        let isValidComposition = false;
+                        if (chordNotes.length === 3) {
+                            isValidComposition = chordNotes.every(note => uniqueNotesInCombination.has(note));
+                        } else {
+                            // For 4-note chords, root (0) and seventh (3) must be present, and the third (1) is preferred.
+                            const vitalNotes = [chordNotes[0], chordNotes[1], chordNotes[3]];
+                            isValidComposition = vitalNotes.every(note => uniqueNotesInCombination.has(note));
+                        }
+
+                        if (!isValidComposition) continue;
+
+                        // Finger stretch filter (excluding open strings '0')
+                        const activeFrets = [f3, f2, f1].filter(f => f > 0);
+                        if (activeFrets.length > 0) {
+                            const minFret = Math.min(...activeFrets);
+                            const maxFret = Math.max(...activeFrets);
+                            if (maxFret - minFret > maxStretch) continue;
+                        }
+
+                        // Count open strings for sorting
+                        const openCount = [f3, f2, f1].filter(f => f === 0).length;
+
+                        validChords.push({
+                            frets: [f3, f2, f1], // Left to right: 3rd, 2nd, 1st
+                            openCount: openCount,
+                            minFret: activeFrets.length > 0 ? Math.min(...activeFrets) : 0
+                        });
+                    }
+                }
+            }
+
+            return sortChords(validChords);
+        }
+
+        function sortChords(chords) {
+            return chords.sort((a, b) => {
+                // 1st string (index 2) and 3rd string (index 0)
+                const firstA = a.frets[2];
+                const firstB = b.frets[2];
+                const thirdA = a.frets[0];
+                const thirdB = b.frets[0];
+
+                // Priority group function:
+                // Group 1: fretted between 1 and 5 (highest priority)
+                // Group 2: open string (0 fret)
+                // Group 3: fretted at 6 or higher (lowest priority)
+                const getPriorityGroup = (fret) => {
+                    if (fret >= 1 && fret <= 5) return 1;
+                    if (fret === 0) return 2;
+                    return 3;
+                };
+
+                // Compare priorities for the first string
+                const pFirstA = getPriorityGroup(firstA);
+                const pFirstB = getPriorityGroup(firstB);
+                if (pFirstA !== pFirstB) {
+                    return pFirstA - pFirstB;
+                }
+
+                // If the first string priorities match, compare the third string priorities
+                const pThirdA = getPriorityGroup(thirdA);
+                const pThirdB = getPriorityGroup(thirdB);
+                if (pThirdA !== pThirdB) {
+                    return pThirdA - pThirdB;
+                }
+
+                // If string priorities match, sort by number of open strings
+                if (b.openCount !== a.openCount) {
+                    return b.openCount - a.openCount;
+                }
+
+                // Finally, sort by closeness to the nut (minimum fret)
+                return a.minFret - b.minFret;
+            });
+        }
+
+        // Find the root octaves in the fretted chord
+        function getRootOctaves(frets, rootNote) {
+            const octaves = [];
+
+            // Check each of the 3 strings
+            frets.forEach((fret, stringIdx) => {
+                // Calculate the MIDI note number for this string
+                const midi = TUNING_MIDI[stringIdx] + fret;
+                // Get the note name
+                const noteName = NOTES[midi % 12];
+                
+                // If the played note matches the chord root
+                if (noteName === rootNote) {
+                    // Calculate the octave
+                    const octave = Math.floor(midi / 12) - 1;
+                    octaves.push(octave);
+                }
+            });
+
+            // Return unique root octaves (for example, [3], [4], or [3, 4] if the root appears on multiple strings)
+            return octaves.sort().join(', ');
+        }
+
+        // Draw the chord SVG diagram
+        function drawChordSVG(frets) {
+            // frets = [left_string, middle, right] -> [3rd, 2nd, 1st]
+            const activeFrets = frets.filter(f => f > 0);
+            
+            // Determine the fret range to draw
+            let startFret = 1;
+            let endFret = 5; // By default draw frets 1-5
+
+            if (activeFrets.length > 0) {
+                const maxFret = Math.max(...activeFrets);
+                const minFret = Math.min(...activeFrets);
+                if (maxFret > 5) {
+                    // Shift the view window if high frets are used
+                    startFret = Math.max(1, minFret - 1);
+                    endFret = startFret + 4;
+                }
+            }
+
+            const width = 120;
+            const height = 240;
+            const fretCount = 5; // Number of frets shown
+            const stringSpacing = 35;
+            const fretSpacing = 36;
+            
+            const startX = 25;
+            const startY = 45;
+
+            let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`;
+
+            // Top nut (drawn thick only when showing fret 1)
+            const nutThickness = (startFret === 1) ? 5 : 2;
+            svg += `<line x1="${startX}" y1="${startY}" x2="${startX + stringSpacing * 2}" y2="${startY}" stroke="#000" stroke-width="${nutThickness}" />`;
+
+            // Draw frets (horizontal lines)
+            for (let i = 1; i <= fretCount; i++) {
+                const y = startY + i * fretSpacing;
+                svg += `<line x1="${startX}" y1="${y}" x2="${startX + stringSpacing * 2}" y2="${y}" stroke="#aaa" stroke-width="1.5" />`;
+            }
+
+            // Draw strings (vertical lines)
+            for (let i = 0; i < 3; i++) {
+                const x = startX + i * stringSpacing;
+                svg += `<line x1="${x}" y1="${startY}" x2="${x}" y2="${startY + fretCount * fretSpacing}" stroke="#888" stroke-width="2" />`;
+            }
+
+            // Fret number labels (left of the fretboard)
+            for (let i = 0; i < fretCount; i++) {
+                const currentFretNum = startFret + i;
+                const y = startY + (i * fretSpacing) + (fretSpacing / 2) + 5;
+                svg += `<text x="${startX - 15}" y="${y}" font-family="sans-serif" font-size="16" font-weight="bold" fill="#0b4e6c" text-anchor="middle">${currentFretNum}</text>`;
+            }
+
+            // Draw fretted positions and open strings
+            frets.forEach((fret, stringIdx) => {
+                const x = startX + stringIdx * stringSpacing;
+                if (fret === 0) {
+                    // Open string (draw a circle above the nut)
+                    svg += `<circle cx="${x}" cy="${startY - 12}" r="5" fill="none" stroke="#0b4e6c" stroke-width="2" />`;
+                } else if (fret >= startFret && fret <= endFret) {
+                    // Fretted position (is within the visible area)
+                    const relativeFret = fret - startFret;
+                    const y = startY + (relativeFret * fretSpacing) + (fretSpacing / 2);
+                    svg += `<circle cx="${x}" cy="${y}" r="11" fill="#0b4e6c" />`;
+                }
+            });
+
+            svg += `</svg>`;
+            return svg;
+        }
+
+        // Update the UI
+        function updateChords() {
+            const root = document.getElementById('root-note').value;
+            const type = document.getElementById('chord-type').value;
+            const stretch = parseInt(document.getElementById('stretch-limit').value) || 3;
+            const container = document.getElementById('chords-container');
+
+            container.innerHTML = '';
+
+            const results = generateChords(root, type, stretch);
+
+            if (results.length === 0) {
+                container.innerHTML = `<div class="no-results">No chord diagrams found.<br><small>Try increasing the allowed finger stretch limit.</small></div>`;
+                return;
+            }
+
+            results.forEach((chord, index) => {
+                const card = document.createElement('div');
+                card.className = 'chord-card';
+                
+                // Chord name
+                let chordName = root + (type === 'maj' ? '' : type === 'min' ? 'm' : type);
+                
+                // Add a label for the first / easiest variant
+                const label = index === 0 ? ' <small style="font-size:0.7rem;color:green;display:block;">(Simple)</small>' : '';
+                // Calculate the root octave for the current chord
+                const rootOctaves = getRootOctaves(chord.frets, root);
+                // Format octave output nicely (if the root is found on the strings)
+                const octaveText = rootOctaves ? `Root octave(s): ${rootOctaves}` : 'Root omitted';
+
+                card.innerHTML = `
+                    <div class="chord-name">${chordName}${label}</div>
+                    ${drawChordSVG(chord.frets)}
+                    <div style="margin-top:10px; font-size:0.85rem; color:#666;">
+                        <div>Frets: [${chord.frets.join(', ')}]</div>
+                        <div style="font-weight: bold; color: var(--primary-color); margin-top: 4px;">
+                            ${octaveText}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Event listeners
+        document.getElementById('root-note').addEventListener('change', updateChords);
+        document.getElementById('chord-type').addEventListener('change', updateChords);
+        document.getElementById('stretch-limit').addEventListener('input', updateChords);
+
+        // Initial update
+        updateChords();
+    </script>
+</body>
+</html>

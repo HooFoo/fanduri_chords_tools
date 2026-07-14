@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panduri Chord Progression Generator</title>
+    <style>
+        :root {
+            --primary-color: #0b4e6c;
+            --accent-color: #ff6b6b;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .wrap {
+            width: 100%;
+            max-width: 1100px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-grow: 1;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-top: 20px;
+            margin-bottom: 5px;
+            font-size: 2.2rem;
+            font-weight: 800;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+
+        /* Chord progression list */
+        #chords {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0 40px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            width: 100%;
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        /* Chord card */
+        .chord-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 150px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .chord-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .chord-name {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            text-transform: capitalize;
+        }
+
+        .chord-info {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            line-height: 1.3;
+        }
+
+        /* Button */
+        .randomise {
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(11, 78, 108, 0.3);
+            transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+            outline: none;
+            margin-bottom: 40px;
+        }
+
+        .randomise:hover {
+            background-color: #083b52;
+            box-shadow: 0 8px 20px rgba(11, 78, 108, 0.4);
+        }
+
+        .randomise:active {
+            transform: scale(0.97);
+        }
+
+        .hotkey-tip {
+            font-size: 0.85rem;
+            color: #95a5a6;
+            margin-top: -30px;
+            margin-bottom: 40px;
+        }
+
+        svg {
+            background: #fff;
+            border-radius: 4px;
+        }
+
+        /* Fade animation during transition */
+        .fade-out {
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <section class="wrap">
+        <h1>Panduri Chord Progressions</h1>
+        <p class="subtitle">Interactive progression generator with built-in fingering diagrams</p>
+        
+        <ul id="chords">
+            </ul>
+        
+        <button class="randomise">Generate Another</button>
+        <div class="hotkey-tip">Or press <strong>Enter</strong> / <strong>Right Arrow</strong></div>
+    </section>
+
+    <script>
+        // --- CHORD SEARCH AND RENDERING ENGINE ---
+        const NOTES = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"];
+        const TUNING = ["A", "C#", "E"]; 
+        const TUNING_MIDI = [57, 61, 64];
+
+        const CHORD_FORMULAS = {
+            "maj": [0, 4, 7],
+            "min": [0, 3, 7],
+            "7": [0, 4, 7, 10],
+            "m7": [0, 3, 7, 10],
+            "maj7": [0, 4, 7, 11],
+            "dim": [0, 3, 6],
+            "sus4": [0, 5, 7]
+        };
+
+        // Parse chord name string (e.g. "am" -> root: "A", type: "min")
+        function parseChordName(name) {
+            let root = "";
+            let type = "maj";
+
+            const raw = name.toLowerCase();
+            
+            // Determine the root note
+            if (raw.startsWith("c#") || raw.startsWith("db")) root = "C#";
+            else if (raw.startsWith("d#") || raw.startsWith("eb")) root = "D#";
+            else if (raw.startsWith("f#") || raw.startsWith("gb")) root = "F#";
+            else if (raw.startsWith("g#") || raw.startsWith("ab")) root = "G#";
+            else if (raw.startsWith("a#") || raw.startsWith("bb")) root = "A#";
+            else {
+                root = raw[0].toUpperCase();
+            }
+
+            // The remaining string defines the chord type
+            const remainder = raw.slice(root.toLowerCase().replace('#', '').length);
+
+            if (remainder === "m" || remainder === "min") type = "min";
+            else if (remainder === "7") type = "7";
+            else if (remainder === "m7") type = "m7";
+            else if (remainder === "maj7") type = "maj7";
+            else if (remainder === "dim" || remainder === "edim") type = "dim";
+            else if (remainder === "sus4") type = "sus4";
+
+            return { root, type };
+        }
+
+        function getNoteAtFret(openNote, fret) {
+            const openIdx = NOTES.indexOf(openNote);
+            return NOTES[(openIdx + fret) % 12];
+        }
+
+        // Find the best fingering (stretch filter and your string priority rules)
+        function getBestFingering(root, type) {
+            const chordNotes = CHORD_FORMULAS[type].map(interval => {
+                const rootIdx = NOTES.indexOf(root);
+                return NOTES[(rootIdx + interval) % 12];
+            });
+
+            const validChords = [];
+
+            for (let f3 = 0; f3 <= 12; f3++) {
+                const n3 = getNoteAtFret(TUNING[0], f3);
+                if (!chordNotes.includes(n3)) continue;
+
+                for (let f2 = 0; f2 <= 12; f2++) {
+                    const n2 = getNoteAtFret(TUNING[1], f2);
+                    if (!chordNotes.includes(n2)) continue;
+
+                    for (let f1 = 0; f1 <= 12; f1++) {
+                        const n1 = getNoteAtFret(TUNING[2], f1);
+                        if (!chordNotes.includes(n1)) continue;
+
+                        const uniqueNotes = new Set([n1, n2, n3]);
+                        let isValid = false;
+
+                        if (chordNotes.length === 3) {
+                            isValid = chordNotes.every(note => uniqueNotes.has(note));
+                        } else {
+                            const vitalNotes = [chordNotes[0], chordNotes[1], chordNotes[3]];
+                            isValid = vitalNotes.every(note => uniqueNotes.has(note));
+                        }
+
+                        if (!isValid) continue;
+
+                        // Stretch filter (max 3 frets)
+                        const activeFrets = [f3, f2, f1].filter(f => f > 0);
+                        if (activeFrets.length > 0) {
+                            const minFret = Math.min(...activeFrets);
+                            const maxFret = Math.max(...activeFrets);
+                            if (maxFret - minFret > 3) continue;
+                        }
+
+                        const openCount = [f3, f2, f1].filter(f => f === 0).length;
+
+                        validChords.push({
+                            frets: [f3, f2, f1],
+                            openCount: openCount,
+                            minFret: activeFrets.length > 0 ? Math.min(...activeFrets) : 0
+                        });
+                    }
+                }
+            }
+
+            // Sort fingerings according to your rules
+            validChords.sort((a, b) => {
+                const firstA = a.frets[2];
+                const firstB = b.frets[2];
+                const thirdA = a.frets[0];
+                const thirdB = b.frets[0];
+
+                const getPriorityGroup = (fret) => {
+                    if (fret >= 1 && fret <= 5) return 1;
+                    if (fret === 0) return 2;
+                    return 3;
+                };
+
+                const pFirstA = getPriorityGroup(firstA);
+                const pFirstB = getPriorityGroup(firstB);
+                if (pFirstA !== pFirstB) return pFirstA - pFirstB;
+
+                const pThirdA = getPriorityGroup(thirdA);
+                const pThirdB = getPriorityGroup(thirdB);
+                if (pThirdA !== pThirdB) return pThirdA - pThirdB;
+
+                if (b.openCount !== a.openCount) return b.openCount - a.openCount;
+                return a.minFret - b.minFret;
+            });
+
+            // Return the best fingering (or an empty shape if none found)
+            return validChords[0] || { frets: [0, 0, 0], openCount: 3, minFret: 0 };
+        }
+
+        // Draw vector SVG chord diagram
+        function drawChordSVG(frets) {
+            const activeFrets = frets.filter(f => f > 0);
+            let startFret = 1;
+            let endFret = 5;
+
+            if (activeFrets.length > 0) {
+                const maxFret = Math.max(...activeFrets);
+                const minFret = Math.min(...activeFrets);
+                if (maxFret > 5) {
+                    startFret = Math.max(1, minFret - 1);
+                    endFret = startFret + 4;
+                }
+            }
+
+            const width = 100;
+            const height = 180;
+            const fretCount = 5;
+            const stringSpacing = 26;
+            const fretSpacing = 26;
+            
+            const startX = 24;
+            const startY = 30;
+
+            let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`;
+
+            // Top nut
+            const nutThickness = (startFret === 1) ? 4 : 1.5;
+            svg += `<line x1="${startX}" y1="${startY}" x2="${startX + stringSpacing * 2}" y2="${startY}" stroke="#000" stroke-width="${nutThickness}" />`;
+
+            // Frets
+            for (let i = 1; i <= fretCount; i++) {
+                const y = startY + i * fretSpacing;
+                svg += `<line x1="${startX}" y1="${y}" x2="${startX + stringSpacing * 2}" y2="${y}" stroke="#ccc" stroke-width="1" />`;
+            }
+
+            // Strings
+            for (let i = 0; i < 3; i++) {
+                const x = startX + i * stringSpacing;
+                svg += `<line x1="${x}" y1="${startY}" x2="${x}" y2="${startY + fretCount * fretSpacing}" stroke="#8c989e" stroke-width="1.5" />`;
+            }
+
+            // Fret numbers
+            for (let i = 0; i < fretCount; i++) {
+                const currentFretNum = startFret + i;
+                const y = startY + (i * fretSpacing) + (fretSpacing / 2) + 4;
+                svg += `<text x="${startX - 12}" y="${y}" font-family="sans-serif" font-size="11" font-weight="bold" fill="#0b4e6c" text-anchor="middle">${currentFretNum}</text>`;
+            }
+
+            // Fingering dots
+            frets.forEach((fret, stringIdx) => {
+                const x = startX + stringIdx * stringSpacing;
+                if (fret === 0) {
+                    svg += `<circle cx="${x}" cy="${startY - 8}" r="4" fill="none" stroke="#0b4e6c" stroke-width="1.5" />`;
+                } else if (fret >= startFret && fret <= endFret) {
+                    const relativeFret = fret - startFret;
+                    const y = startY + (relativeFret * fretSpacing) + (fretSpacing / 2);
+                    svg += `<circle cx="${x}" cy="${y}" r="8" fill="#0b4e6c" />`;
+                }
+            });
+
+            svg += `</svg>`;
+            return svg;
+        }
+
+        // --- PROGRESSION ENGINE ---
+        const ALL_PROGRESSIONS = [
+            ['am','dm','e7','am'],
+            ['am','c','g','am'],
+            ['a','d','a','e7'],
+            ['a7','d7','a7','e7','d7','a7'],
+            ['am','c','d','f','am','e7','am'],
+            ['am','c','dm','am','e7','am'],
+            ['am','e7','g','d','f','c','dm','e7'],
+            ['a','d','e7','a','f#m','d','g'],
+            ['b7','em','cm','g'],
+            ['c','edim','f','g7'],
+            ['c','am','f','g7'],
+            ['c','e7','f','fm'],
+            ['c','a7','d7','g','c'],
+            ['c','e7','f','fm','c','g7','c','g7','c'],
+            ['c','c7','f','fm','c'],
+            ['c','g','am','f'],
+            ['c','f','d7','g'],
+            ['dm','gm','a','f','bb','e7','a'],
+            ['dm', 'c', 'bb', 'a'],
+            ['dm','g7','c','am','f','dm','bb','g7'],
+            ['d','bm','em','a'],
+            ['em','b7','bm7','a','c','g','a','b7'],
+            ['em','c','g','d'],
+            ['em','g','d','c'],
+            ['f','dm','bb','c'],
+            ['f','a7','dm','f7','bb','bbm','f','c7'],
+            ['g7','c','am','e7'],
+            ['g','e','a','d'],
+            ['gm','f','eb','d'],
+            ['gm','cm','d7']
+        ];
+
+        let availableProgressions = [...ALL_PROGRESSIONS];
+        let usedProgressions = [];
+
+        function randChords() {
+            const chordsContainer = document.getElementById('chords');
+
+            if (availableProgressions.length === 0) {
+                availableProgressions = [...usedProgressions];
+                usedProgressions = [];
+            }
+
+            // Random progression selection
+            const randomIndex = Math.floor(Math.random() * availableProgressions.length);
+            const currentProg = availableProgressions.splice(randomIndex, 1)[0];
+            usedProgressions.push(currentProg);
+
+            // Fade animation and render
+            chordsContainer.classList.add('fade-out');
+            
+            setTimeout(() => {
+                chordsContainer.innerHTML = '';
+                
+                currentProg.forEach(chordName => {
+                    // Parse and find the best fingering
+                    const { root, type } = parseChordName(chordName);
+                    const bestChord = getBestFingering(root, type);
+                    
+                    // Create the DOM card element
+                    const li = document.createElement('li');
+                    li.className = 'chord-card';
+                    li.innerHTML = `
+                        <div class="chord-name">${chordName}</div>
+                        ${drawChordSVG(bestChord.frets)}
+                        <div class="chord-info">
+                            [${bestChord.frets.join(', ')}]
+                        </div>
+                    `;
+                    chordsContainer.appendChild(li);
+                });
+
+                // Remove fade class
+                chordsContainer.classList.remove('fade-out');
+                
+                // Write the state to the browser hash URL
+                const urlString = currentProg.join("-");
+                history.pushState(null, null, '#' + urlString);
+            }, 200);
+        }
+
+        // Render progression from the hash URL (for sharing links)
+        function queryChords(urlSplit) {
+            const chordsContainer = document.getElementById('chords');
+            chordsContainer.innerHTML = '';
+            
+            urlSplit.forEach(chordName => {
+                const { root, type } = parseChordName(chordName);
+                const bestChord = getBestFingering(root, type);
+                
+                const li = document.createElement('li');
+                li.className = 'chord-card';
+                li.innerHTML = `
+                    <div class="chord-name">${chordName}</div>
+                    ${drawChordSVG(bestChord.frets)}
+                    <div class="chord-info">
+                        [${bestChord.frets.join(', ')}]
+                    </div>
+                `;
+                chordsContainer.appendChild(li);
+            });
+        }
+
+        // --- EVENT HANDLERS ---
+        
+        // Click on generate button
+        document.querySelector('.randomise').addEventListener('click', () => {
+            randChords();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Keyboard navigation
+        document.body.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === 'ArrowRight') {
+                randChords();
+            }
+        });
+
+        // Initialization on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.location.hash) {
+                const urlRef = window.location.hash.substring(1);
+                const urlSplit = urlRef.split("-");
+                queryChords(urlSplit);
+            } else {
+                randChords();
+            }
+        });
+
+        // Handle browser Back / Forward buttons
+        window.onpopstate = function () {
+            if (window.location.hash) {
+                const urlRef = window.location.hash.substring(1);
+                const urlSplit = urlRef.split("-");
+                queryChords(urlSplit);
+            }
+        };
+    </script>
+</body>
+</html>
