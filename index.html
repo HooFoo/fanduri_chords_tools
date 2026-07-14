@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panduri Chords Toolkit</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f7fb; color: #20232a; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1, h2 { color: #0b4e6c; }
+        h3 { margin-top: 30px; color: #2c3e50; }
+        .tabs { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 10px; background: #fff; border: 1px solid #dde2ea; border-radius: 14px; padding: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .tab-link { padding: 10px 16px; border-radius: 10px; background: transparent; border: 1px solid transparent; color: #0b4e6c; font-weight: 600; text-decoration: none; transition: background-color 0.2s, border-color 0.2s; }
+        .tab-link:hover { background: #e8f2fb; }
+        .tab-link.active { background: #0b4e6c; color: #fff; border-color: #0b4e6c; }
+        .lang-section { margin-bottom: 32px; padding: 24px; background: #fff; border: 1px solid #dde2ea; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+        .tools-list { list-style: none; margin: 16px 0; padding: 0; display: grid; gap: 14px; }
+        .tools-list li { padding: 14px 16px; background: #f8fbff; border: 1px solid #e5eff7; border-radius: 14px; }
+        .tools-list li strong { display: block; margin-bottom: 6px; }
+        .tools-list a { color: #0b4e6c; text-decoration: none; }
+        .tools-list a:hover { text-decoration: underline; }
+        .note { margin-top: 18px; font-size: 0.95rem; color: #5a6372; }
+        @media (max-width: 640px) { .tabs { flex-direction: column; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Panduri Chords Toolkit</h1>
+        <p class="note">Quick guide to the tools in this project, shown in English, Russian, and Georgian.</p>
+
+        <nav class="tabs" aria-label="Language tabs">
+            <a href="#english" class="tab-link" data-lang="english">English</a>
+            <a href="#russian" class="tab-link" data-lang="russian">Русский</a>
+            <a href="#georgian" class="tab-link" data-lang="georgian">ქართული</a>
+        </nav>
+
+        <div class="tab-content">
+            <section class="lang-section" id="english">
+                <h2>English</h2>
+                <ul class="tools-list">
+                    <li><strong><a href="calculator.html">calculator.html</a></strong> — Generates playable Panduri chord voicings and displays fret diagrams.</li>
+                    <li><strong><a href="progressions_calculated.html">progressions_calculated.html</a></strong> — Creates random chord progressions and calculates the best Panduri fingering for each chord.</li>
+                    <li><strong><a href="progressions_images.html">progressions_images.html</a></strong> — Displays random chord progressions as chord image cards with shareable hash links.</li>
+                    <li><strong><a href="progressions_with_start.html">progressions_with_start.html</a></strong> — Lets you choose a starting chord and shows harmonically related progressions.</li>
+                    <li><strong><a href="songbook.html">songbook.html</a></strong> — Parses pasted song text or chord lists, highlights chords inline, and displays chord images in a sidebar.</li>
+                </ul>
+                <p class="note">Songs and chord catalog: <a href="https://akordebi.ge" target="_blank" rel="noopener">akordebi.ge</a></p>
+            </section>
+
+            <section class="lang-section" id="russian">
+                <h2>Русский</h2>
+                <p>Используйте ссылки ниже для открытия каждого инструмента. Отдельная ссылка на <a href="https://akordebi.ge" target="_blank" rel="noopener">akordebi.ge</a> указана как каталог аккордов.</p>
+                <ul class="tools-list">
+                    <li><strong><a href="calculator.html">calculator.html</a></strong> — Генерирует играбельные варианты аккордов для Пандури и показывает схемы ладов.</li>
+                    <li><strong><a href="progressions_calculated.html">progressions_calculated.html</a></strong> — Создает случайные аккордовые прогрессии и рассчитывает лучшую аппликатуру для каждой.</li>
+                    <li><strong><a href="progressions_images.html">progressions_images.html</a></strong> — Отображает случайные прогрессии аккордов в виде карточек с изображениями и ссылками для обмена.</li>
+                    <li><strong><a href="progressions_with_start.html">progressions_with_start.html</a></strong> — Позволяет выбрать стартовый аккорд и показывает гармонично связанные прогрессии.</li>
+                    <li><strong><a href="songbook.html">songbook.html</a></strong> — Анализирует вставленный текст песни или список аккордов, подсвечивает аккорды и показывает их изображения в боковой панели.</li>
+                </ul>
+                <p class="note">Каталог аккордов и песен: <a href="https://akordebi.ge" target="_blank" rel="noopener">akordebi.ge</a></p>
+            </section>
+
+            <section class="lang-section" id="georgian">
+                <h2>ქართული</h2>
+                <p>გამოიყენეთ ქვემოთ მოცემული ბმულები თითოეული ინსტრუმენტის გახსნისთვის. ცალკე ბმულია <a href="https://akordebi.ge" target="_blank" rel="noopener">akordebi.ge</a> როგორც აკორდების კატალოგი.</p>
+                <ul class="tools-list">
+                    <li><strong><a href="calculator.html">calculator.html</a></strong> — ქმნის ფანდურის დაკვეთისაკენ აკორდების ვარიანტებს და აჩვენებს ლადების დიაგრამებს.</li>
+                    <li><strong><a href="progressions_calculated.html">progressions_calculated.html</a></strong> — ქმნის შემთხვევით აკორდულ პროგრესიებს და აკეთებს საუკეთესო Panduri-ის აპლიკატურას თითოეული აკორდისთვის.</li>
+                    <li><strong><a href="progressions_images.html">progressions_images.html</a></strong> — აჩვენებს შემთხვევით აკორდულ პროგრესიებს, როგორც გამოსახულების ბარათებს, შარების უნიკალური ჰეშით.</li>
+                    <li><strong><a href="progressions_with_start.html">progressions_with_start.html</a></strong> — შესაძლებლობას იძლევა აირჩიო სტარტული აკორდი და აჩვენებს ჰარმონიულად დაკავშირებულ პროგრესიებს.</li>
+                    <li><strong><a href="songbook.html">songbook.html</a></strong> — იხვეწს ჩასმულ სიმღერის ტექსტს ან აკორდების სიას, აღნიშნავს აკორდებს და აჩვენებს მათ სურათებს გვერდით პანელში.</li>
+                </ul>
+                <p class="note">აკორდების და სიმღერების კატალოგი: <a href="https://akordebi.ge" target="_blank" rel="noopener">akordebi.ge</a></p>
+            </section>
+        </div>
+    </div>
+    <script>
+        function switchTab() {
+            const hash = window.location.hash.substring(1) || 'english';
+            const sections = document.querySelectorAll('.lang-section');
+            const links = document.querySelectorAll('.tab-link');
+
+            sections.forEach(section => {
+                section.style.display = section.id === hash ? 'block' : 'none';
+            });
+
+            links.forEach(link => {
+                link.classList.toggle('active', link.getAttribute('href') === '#' + hash);
+            });
+        }
+
+        window.addEventListener('hashchange', switchTab);
+        window.addEventListener('DOMContentLoaded', switchTab);
+    </script>
+</body>
+</html>
