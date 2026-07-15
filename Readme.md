@@ -41,4 +41,4 @@ Bamba, Bamba
 
 ```
 
-## Great thanks for [Akordebi.ge](https://akordebi.ge) for assets. All chord images was authored by them. 
+## Great thanks for [Akordebi.ge](https://akordebi.ge) for assets. 
