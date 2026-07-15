@@ -167,6 +167,8 @@
 
         const NOTES = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
         const TUNING = ['A', 'C#', 'E'];
+        // MIDI numbers for open strings (A3, C#4, E4) to compute octaves when sorting
+        const TUNING_MIDI = [57, 61, 64];
         const CHORD_FORMULAS = {
             maj: [0, 4, 7],
             min: [0, 3, 7],
@@ -178,11 +180,13 @@
         const chordItems = [];
         ROOT_OPTIONS.forEach(root => {
             CHORD_TYPES.forEach(type => {
-                chordItems.push({
-                    label: `${root.display}${type.label}`,
-                    root: root.value,
-                    type: type.value
-                });
+                        // For major chords omit the "maj" suffix (e.g., "C" instead of "Cmaj")
+                        const label = (type.value === 'maj') ? root.display : `${root.display}${type.label}`;
+                        chordItems.push({
+                            label: label,
+                            root: root.value,
+                            type: type.value
+                        });
             });
         });
 
@@ -244,7 +248,15 @@
                 }
             }
 
-            return sortChords(validChords);
+            // Provide current root to sorting function via a short-lived global
+            try {
+                window.__currentSortingRoot = root;
+            } catch (e) {
+                // ignore
+            }
+            const sorted = sortChords(validChords);
+            try { delete window.__currentSortingRoot; } catch (e) {}
+            return sorted;
         }
 
         function sortChords(chords) {
@@ -274,6 +286,33 @@
 
                 if (b.openCount !== a.openCount) {
                     return b.openCount - a.openCount;
+                }
+
+                // Prefer chords with the root in a lower octave
+                const getLowestRootOctave = (frets, root) => {
+                    const octaves = [];
+                    frets.forEach((fret, stringIdx) => {
+                        const midi = TUNING_MIDI[stringIdx] + fret;
+                        const noteName = NOTES[midi % 12];
+                        if (noteName === root) {
+                            const octave = Math.floor(midi / 12) - 1;
+                            octaves.push(octave);
+                        }
+                    });
+                    if (octaves.length === 0) return Infinity;
+                    return Math.min(...octaves);
+                };
+
+                // 'root' variable is only known in generateChords; if not present, skip octave priority
+                try {
+                    const rootNote = window.__currentSortingRoot || null;
+                    if (rootNote) {
+                        const octA = getLowestRootOctave(a.frets, rootNote);
+                        const octB = getLowestRootOctave(b.frets, rootNote);
+                        if (octA !== octB) return octA - octB;
+                    }
+                } catch (e) {
+                    // ignore and continue
                 }
 
                 return a.minFret - b.minFret;

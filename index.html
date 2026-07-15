@@ -7,6 +7,8 @@
     <title>Panduri Chords Toolkit</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f7fb; color: #20232a; }
+        .back-btn { position: fixed; top: 16px; left: 16px; z-index: 1000; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; background: #fff; color: #0b4e6c; text-decoration: none; border: 1px solid #dde2ea; box-shadow: 0 4px 10px rgba(0,0,0,0.08); font-weight: 600; }
+        .back-btn:hover { background: #e8f2fb; }
         .container { max-width: 900px; margin: 0 auto; }
         h1, h2 { color: #0b4e6c; }
         h3 { margin-top: 30px; color: #2c3e50; }
@@ -25,6 +27,7 @@
     </style>
 </head>
 <body>
+    <a class="back-btn" href="index.html">← Back</a>
     <div class="container">
         <h1>Panduri Chords Toolkit</h1>
         <p class="note">Quick guide to the tools in this project, shown in English, Russian, and Georgian.</p>
@@ -39,12 +42,13 @@
             <section class="lang-section" id="english">
                 <h2>English</h2>
                 <ul class="tools-list">
-                    <li><strong><a href="calculator.html">calculator.html</a></strong> — Generates playable Panduri chord voicings and displays fret diagrams.</li>
-                    <li><strong><a href="progressions_calculated.html">progressions_calculated.html</a></strong> — Creates random chord progressions and calculates the best Panduri fingering for each chord.</li>
-                    <li><strong><a href="progressions_images.html">progressions_images.html</a></strong> — Displays random chord progressions as chord image cards with shareable hash links.</li>
-                    <li><strong><a href="progressions_with_start.html">progressions_with_start.html</a></strong> — Lets you choose a starting chord and shows harmonically related progressions.</li>
-                    <li><strong><a href="songbook.html">songbook.html</a></strong> — Parses pasted song text or chord lists, highlights chords inline, and displays chord images in a sidebar.</li>
-                    <li><strong><a href="tuner.html">tuner.html</a></strong> — Provides a simple Panduri tuner with frequency and cent deviation feedback for the standard E4–C#4–A3 tuning.</li>
+                    <li><strong><a href="calculator.html">Calculator</a></strong> — Generates playable Panduri chord voicings and displays fret diagrams.</li>
+                    <li><strong><a href="first_chords.html">First chords</a></strong> — Shows the first calculator chords as a gallery with PNG export.</li>
+                    <li><strong><a href="progressions_calculated.html">Chord progressions</a></strong> — Creates random chord progressions and calculates the best Panduri fingering for each chord.</li>
+                    <li><strong><a href="progressions_images.html">Progression images</a></strong> — Displays random chord progressions as chord image cards with shareable hash links.</li>
+                    <li><strong><a href="progressions_with_start.html">Start from chord</a></strong> — Lets you choose a starting chord and shows harmonically related progressions.</li>
+                    <li><strong><a href="songbook.html">Songbook</a></strong> — Parses pasted song text or chord lists, highlights chords inline, and displays chord images in a sidebar.</li>
+                    <li><strong><a href="tuner.html">Tuner</a></strong> — Provides a simple Panduri tuner with frequency and cent deviation feedback for the standard E4–C#4–A3 tuning.</li>
                 </ul>
                 <p class="note">Songs and chord catalog: <a href="https://akordebi.ge" target="_blank" rel="noopener">akordebi.ge</a></p>
             </section>
@@ -52,12 +56,13 @@
             <section class="lang-section" id="russian">
                 <h2>Русский</h2>
                 <ul class="tools-list">
-                    <li><strong><a href="calculator.html">calculator.html</a></strong> — Генерирует играбельные варианты аккордов для Пандури и показывает схемы ладов.</li>
-                    <li><strong><a href="progressions_calculated.html">progressions_calculated.html</a></strong> — Создает случайные аккордовые прогрессии и рассчитывает лучшую аппликатуру для каждой.</li>
-                    <li><strong><a href="progressions_images.html">progressions_images.html</a></strong> — Отображает случайные прогрессии аккордов в виде карточек с изображениями и ссылками для обмена.</li>
-                    <li><strong><a href="progressions_with_start.html">progressions_with_start.html</a></strong> — Позволяет выбрать стартовый аккорд и показывает гармонично связанные прогрессии.</li>
-                    <li><strong><a href="songbook.html">songbook.html</a></strong> — Анализирует вставленный текст песни или список аккордов, подсвечивает аккорды и показывает их изображения в боковой панели.</li>
-                    <li><strong><a href="tuner.html">tuner.html</a></strong> — Предоставляет простой тюнер для Пандури со считыванием частоты и отклонения в центах для стандартного строя E4–C#4–A3.</li>
+                    <li><strong><a href="calculator.html">Калькулятор</a></strong> — Генерирует играбельные варианты аккордов для Пандури и показывает схемы ладов.</li>
+                    <li><strong><a href="first_chords.html">Первые аккорды</a></strong> — Показывает первые аккорды из калькулятора в виде галереи с экспортом в PNG.</li>
+                    <li><strong><a href="progressions_calculated.html">Прогрессии</a></strong> — Создает случайные аккордовые прогрессии и рассчитывает лучшую аппликатуру для каждой.</li>
+                    <li><strong><a href="progressions_images.html">Изображения прогрессий</a></strong> — Отображает случайные прогрессии аккордов в виде карточек с изображениями и ссылками для обмена.</li>
+                    <li><strong><a href="progressions_with_start.html">С стартовым аккордом</a></strong> — Позволяет выбрать стартовый аккорд и показывает гармонично связанные прогрессии.</li>
+                    <li><strong><a href="songbook.html">Песенник</a></strong> — Анализирует вставленный текст песни или список аккордов, подсвечивает аккорды и показывает их изображения в боковой панели.</li>
+                    <li><strong><a href="tuner.html">Тюнер</a></strong> — Предоставляет простой тюнер для Пандури со считыванием частоты и отклонения в центах для стандартного строя E4–C#4–A3.</li>
                 </ul>
                 <p class="note">Каталог аккордов и песен: <a href="https://akordebi.ge" target="_blank" rel="noopener">akordebi.ge</a></p>
             </section>
@@ -65,12 +70,13 @@
             <section class="lang-section" id="georgian">
                 <h2>ქართული</h2>
                 <ul class="tools-list">
-                    <li><strong><a href="calculator.html">calculator.html</a></strong> — ქმნის ფანდურის დაკვეთისაკენ აკორდების ვარიანტებს და აჩვენებს ლადების დიაგრამებს.</li>
-                    <li><strong><a href="progressions_calculated.html">progressions_calculated.html</a></strong> — ქმნის შემთხვევით აკორდულ პროგრესიებს და აკეთებს საუკეთესო Panduri-ის აპლიკატურას თითოეული აკორდისთვის.</li>
-                    <li><strong><a href="progressions_images.html">progressions_images.html</a></strong> — აჩვენებს შემთხვევით აკორდულ პროგრესიებს, როგორც გამოსახულების ბარათებს, შარების უნიკალური ჰეშით.</li>
-                    <li><strong><a href="progressions_with_start.html">progressions_with_start.html</a></strong> — შესაძლებლობას იძლევა აირჩიო სტარტული აკორდი და აჩვენებს ჰარმონიულად დაკავშირებულ პროგრესიებს.</li>
-                    <li><strong><a href="songbook.html">songbook.html</a></strong> — იხვეწს ჩასმულ სიმღერის ტექსტს ან აკორდების სიას, აღნიშნავს აკორდებს და აჩვენებს მათ სურათებს გვერდით პანელში.</li>
-                    <li><strong><a href="tuner.html">tuner.html</a></strong> — მცირე პანდურის „ტიუნერი“, რომელიც აჩვენებს სიხშირეს და ცენტების отклонბას სტანდარტული E4–C#4–A3 თიუნინგისთვის.</li>
+                    <li><strong><a href="calculator.html">კალკულატორი</a></strong> — ქმნის ფანდურის დაკვეთისაკენ აკორდების ვარიანტებს და აჩვენებს ლადების დიაგრამებს.</li>
+                    <li><strong><a href="first_chords.html">პირველი აკორდები</a></strong> — აჩვენებს კალკულატორიდან პირველ აკორდებს გალერეის სახით და PNG ექსპორტით.</li>
+                    <li><strong><a href="progressions_calculated.html">პროგრესია</a></strong> — ქმნის შემთხვევით აკორდულ პროგრესიებს და აკეთებს საუკეთესო Panduri-ის აპლიკატურას თითოეული აკორდისთვის.</li>
+                    <li><strong><a href="progressions_images.html">პროგრესიის სურათები</a></strong> — აჩვენებს შემთხვევით აკორდულ პროგრესიებს, როგორც გამოსახულების ბარათებს, შარების უნიკალური ჰეშით.</li>
+                    <li><strong><a href="progressions_with_start.html">სტარტული აკორდით</a></strong> — შესაძლებლობას იძლევა აირჩიო სტარტული აკორდი და აჩვენებს ჰარმონიულად დაკავშირებულ პროგრესიებს.</li>
+                    <li><strong><a href="songbook.html">სიმღერების წიგნი</a></strong> — იხვეწს ჩასმულ სიმღერის ტექსტს ან აკორდების სიას, აღნიშნავს აკორდებს და აჩვენებს მათ სურათებს გვერდით პანელში.</li>
+                    <li><strong><a href="tuner.html">ტიუნერი</a></strong> — მცირე პანდურის „ტიუნერი“, რომელიც აჩვენებს სიხშირეს და ცენტების отклонბას სტანდარტული E4–C#4–A3 თიუნინგისთვის.</li>
                 </ul>
                 <p class="note">აკორდების და სიმღერების კატალოგი: <a href="https://akordebi.ge" target="_blank" rel="noopener">akordebi.ge</a></p>
             </section>

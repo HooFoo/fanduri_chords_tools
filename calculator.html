@@ -113,9 +113,21 @@
             background: #fff;
             border-radius: 4px;
         }
+        .save-btn {
+            border: none;
+            border-radius: 999px;
+            background: var(--primary-color);
+            color: #fff;
+            padding: 8px 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .save-btn:hover { background: #08384f; }
     </style>
 </head>
 <body>
+    <a href="index.html" style="position:fixed;top:16px;left:16px;z-index:1000;display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:#fff;color:#0b4e6c;text-decoration:none;border:1px solid #dde2ea;box-shadow:0 4px 10px rgba(0,0,0,0.08);font-weight:600;">← Back</a>
 
     <h1>Panduri Chord Calculator</h1>
     <p class="subtitle">Standard tuning: E4 (1st) — C#4 (2nd) — A3 (3rd)</p>
@@ -429,6 +441,81 @@
                     </div>
                 `;
                 container.appendChild(card);
+
+                // Add Save PNG button similar to gallery
+                const saveBtn = document.createElement('button');
+                saveBtn.className = 'save-btn';
+                saveBtn.textContent = 'Save PNG';
+                saveBtn.addEventListener('click', () => {
+                    const exportCanvas = document.createElement('canvas');
+                    exportCanvas.width = 200;
+                    exportCanvas.height = 280;
+                    const ctx = exportCanvas.getContext('2d');
+
+                    ctx.fillStyle = '#f4f7f6';
+                    ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+                    const margin = 10;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(margin, margin, exportCanvas.width - margin * 2, exportCanvas.height - margin * 2);
+
+                    // Title
+                    ctx.fillStyle = '#0b4e6c';
+                    ctx.font = 'bold 16px Segoe UI';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(chordName, exportCanvas.width / 2, margin + 22);
+
+                    const svgEl = card.querySelector('svg');
+                    let svgMarkup = '';
+                    if (svgEl) svgMarkup = svgEl.outerHTML;
+                    else svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="240" viewBox="0 0 120 240"></svg>`;
+
+                    // Ensure width/height and viewBox
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(svgMarkup, 'image/svg+xml');
+                    const root = doc.documentElement;
+                    const w = root.getAttribute('width') || '120';
+                    const h = root.getAttribute('height') || '240';
+                    root.setAttribute('width', w);
+                    root.setAttribute('height', h);
+                    root.setAttribute('viewBox', root.getAttribute('viewBox') || `0 0 ${w} ${h}`);
+                    // Ensure SVG namespace so it renders correctly when loaded as an image
+                    root.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                    const finalSvg = new XMLSerializer().serializeToString(doc);
+
+                    const blob = new Blob([finalSvg], { type: 'image/svg+xml;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const img = new Image();
+                    img.onload = () => {
+                        const maxW = exportCanvas.width * 0.85;
+                        const maxH = exportCanvas.height * 0.75;
+                        const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+                        const drawW = img.width * scale;
+                        const drawH = img.height * scale;
+                        const x = (exportCanvas.width - drawW) / 2;
+                        const y = margin + 30;
+                        ctx.drawImage(img, x, y, drawW, drawH);
+
+                        const link = document.createElement('a');
+                        document.body.appendChild(link);
+                        link.download = `${chordName}.png`;
+                        link.href = exportCanvas.toDataURL('image/png');
+                        link.click();
+                        link.remove();
+                        URL.revokeObjectURL(url);
+                    };
+                    img.onerror = () => {
+                        const link = document.createElement('a');
+                        document.body.appendChild(link);
+                        link.download = `${chordName}.png`;
+                        link.href = exportCanvas.toDataURL('image/png');
+                        link.click();
+                        link.remove();
+                        if (url) URL.revokeObjectURL(url);
+                    };
+                    img.src = url;
+                });
+                card.appendChild(saveBtn);
             });
         }
 
