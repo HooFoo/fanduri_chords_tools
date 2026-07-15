@@ -400,15 +400,132 @@
             return svg;
         }
 
-        // Update the UI
+        function parseHashChord() {
+            const hash = window.location.hash.slice(1).trim();
+            if (!hash) return null;
+
+            const [namePart, fretsPart] = hash.split(':');
+            if (!namePart || !fretsPart) return null;
+
+            const frets = fretsPart.split(',').map(value => parseInt(value.trim(), 10));
+            if (frets.length !== 3 || frets.some(value => Number.isNaN(value) || value < 0 || value > 12)) {
+                return null;
+            }
+
+            return {
+                label: namePart.trim(),
+                frets
+            };
+        }
+
         function updateChords() {
-            const root = document.getElementById('root-note').value;
-            const type = document.getElementById('chord-type').value;
-            const stretch = parseInt(document.getElementById('stretch-limit').value) || 3;
             const container = document.getElementById('chords-container');
+            const hashChord = parseHashChord();
 
             container.innerHTML = '';
 
+            if (hashChord) {
+                const chord = {
+                    frets: hashChord.frets,
+                    openCount: hashChord.frets.filter(f => f === 0).length,
+                    minFret: hashChord.frets.filter(f => f > 0).length > 0 ? Math.min(...hashChord.frets.filter(f => f > 0)) : 0
+                };
+
+                const card = document.createElement('div');
+                card.className = 'chord-card';
+                const chordName = hashChord.label;
+                const root = document.getElementById('root-note').value;
+                const rootOctaves = getRootOctaves(chord.frets, root);
+                const octaveText = rootOctaves ? `Root octave(s): ${rootOctaves}` : 'Root omitted';
+
+                card.innerHTML = `
+                    <div class="chord-name">${chordName}</div>
+                    ${drawChordSVG(chord.frets)}
+                    <div style="margin-top:10px; font-size:0.85rem; color:#666;">
+                        <div>Frets: [${chord.frets.join(', ')}]</div>
+                        <div style="font-weight: bold; color: var(--primary-color); margin-top: 4px;">
+                            ${octaveText}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+
+                const saveBtn = document.createElement('button');
+                saveBtn.className = 'save-btn';
+                saveBtn.textContent = 'Save PNG';
+                saveBtn.addEventListener('click', () => {
+                    const exportCanvas = document.createElement('canvas');
+                    exportCanvas.width = 200;
+                    exportCanvas.height = 280;
+                    const ctx = exportCanvas.getContext('2d');
+
+                    ctx.fillStyle = '#f4f7f6';
+                    ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+                    const margin = 10;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(margin, margin, exportCanvas.width - margin * 2, exportCanvas.height - margin * 2);
+
+                    ctx.fillStyle = '#0b4e6c';
+                    ctx.font = 'bold 16px Segoe UI';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(chordName, exportCanvas.width / 2, margin + 22);
+
+                    const svgEl = card.querySelector('svg');
+                    let svgMarkup = '';
+                    if (svgEl) svgMarkup = svgEl.outerHTML;
+                    else svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="240" viewBox="0 0 120 240"></svg>`;
+
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(svgMarkup, 'image/svg+xml');
+                    const rootSvg = doc.documentElement;
+                    const w = rootSvg.getAttribute('width') || '120';
+                    const h = rootSvg.getAttribute('height') || '240';
+                    rootSvg.setAttribute('width', w);
+                    rootSvg.setAttribute('height', h);
+                    rootSvg.setAttribute('viewBox', rootSvg.getAttribute('viewBox') || `0 0 ${w} ${h}`);
+                    rootSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                    const finalSvg = new XMLSerializer().serializeToString(doc);
+
+                    const blob = new Blob([finalSvg], { type: 'image/svg+xml;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const img = new Image();
+                    img.onload = () => {
+                        const maxW = exportCanvas.width * 0.85;
+                        const maxH = exportCanvas.height * 0.75;
+                        const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+                        const drawW = img.width * scale;
+                        const drawH = img.height * scale;
+                        const x = (exportCanvas.width - drawW) / 2;
+                        const y = margin + 30;
+                        ctx.drawImage(img, x, y, drawW, drawH);
+
+                        const link = document.createElement('a');
+                        document.body.appendChild(link);
+                        link.download = `${chordName}.png`;
+                        link.href = exportCanvas.toDataURL('image/png');
+                        link.click();
+                        link.remove();
+                        URL.revokeObjectURL(url);
+                    };
+                    img.onerror = () => {
+                        const link = document.createElement('a');
+                        document.body.appendChild(link);
+                        link.download = `${chordName}.png`;
+                        link.href = exportCanvas.toDataURL('image/png');
+                        link.click();
+                        link.remove();
+                        if (url) URL.revokeObjectURL(url);
+                    };
+                    img.src = url;
+                });
+                card.appendChild(saveBtn);
+                return;
+            }
+
+            const root = document.getElementById('root-note').value;
+            const type = document.getElementById('chord-type').value;
+            const stretch = parseInt(document.getElementById('stretch-limit').value) || 3;
             const results = generateChords(root, type, stretch);
 
             if (results.length === 0) {
