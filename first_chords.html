@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/jpeg" href="images/site_logo.jpg">
+    <title>First Chords Gallery</title>
+    <style>
+        :root {
+            --primary-color: #0b4e6c;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --border-color: #dce4ea;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-top: 44px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #667085;
+            margin-bottom: 24px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .chord-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chord-card h3 {
+            margin: 0;
+            color: var(--primary-color);
+            font-size: 1.05rem;
+            text-align: center;
+        }
+
+        .diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 220px;
+            border-radius: 12px;
+            background: linear-gradient(180deg, #fdfefe 0%, #f8fbfc 100%);
+            border: 1px solid #eef2f5;
+            padding: 10px;
+        }
+
+        .diagram svg {
+            width: 100%;
+            max-width: 240px;
+            height: auto;
+            display: block;
+        }
+
+        .meta {
+            margin: 0;
+            font-size: 0.86rem;
+            color: #667085;
+            line-height: 1.4;
+        }
+
+        .meta strong {
+            color: var(--primary-color);
+            display: block;
+            margin-top: 4px;
+        }
+
+        .save-btn {
+            border: none;
+            border-radius: 999px;
+            background: var(--primary-color);
+            color: #fff;
+            padding: 10px 14px;
+            font-weight: 600;
+            cursor: pointer;
+            align-self: center;
+        }
+
+        .save-btn:hover {
+            background: #08384f;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 1000;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: #fff;
+            color: var(--primary-color);
+            text-decoration: none;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            font-weight: 600;
+        }
+
+        .back-btn:hover {
+            background: #eef7fb;
+        }
+    </style>
+</head>
+<body>
+    <a class="back-btn" href="index.html">← Back</a>
+
+    <div class="page">
+        <h1>Chord diagram gallery</h1>
+        <p class="subtitle">Generated fretboard diagrams for major, minor, flat/sharp roots, and seventh chords using the same logic as the calculator.</p>
+        <div class="grid" id="chords-grid"></div>
+    </div>
+
+    <script>
+        const ROOT_OPTIONS = [
+            { display: 'C', value: 'C' },
+            { display: 'C#/Db', value: 'C#' },
+            { display: 'D', value: 'D' },
+            { display: 'D#/Eb', value: 'D#' },
+            { display: 'E', value: 'E' },
+            { display: 'F', value: 'F' },
+            { display: 'F#/Gb', value: 'F#' },
+            { display: 'G', value: 'G' },
+            { display: 'G#/Ab', value: 'G#' },
+            { display: 'A', value: 'A' },
+            { display: 'A#/Bb', value: 'A#' },
+            { display: 'B', value: 'B' }
+        ];
+
+        const CHORD_TYPES = [
+            { value: 'maj', label: 'maj' },
+            { value: 'min', label: 'm' },
+            { value: 'maj7', label: 'maj7' },
+            { value: '7', label: '7' },
+            { value: 'm7', label: 'm7' }
+        ];
+
+        const NOTES = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
+        const TUNING = ['A', 'C#', 'E'];
+        const CHORD_FORMULAS = {
+            maj: [0, 4, 7],
+            min: [0, 3, 7],
+            '7': [0, 4, 7, 10],
+            m7: [0, 3, 7, 10],
+            maj7: [0, 4, 7, 11]
+        };
+
+        const chordItems = [];
+        ROOT_OPTIONS.forEach(root => {
+            CHORD_TYPES.forEach(type => {
+                chordItems.push({
+                    label: `${root.display}${type.label}`,
+                    root: root.value,
+                    type: type.value
+                });
+            });
+        });
+
+        const grid = document.getElementById('chords-grid');
+
+        function getChordNotes(root, type) {
+            const rootIdx = NOTES.indexOf(root);
+            const intervals = CHORD_FORMULAS[type];
+            return intervals.map(interval => NOTES[(rootIdx + interval) % 12]);
+        }
+
+        function getNoteAtFret(openNote, fret) {
+            const openIdx = NOTES.indexOf(openNote);
+            return NOTES[(openIdx + fret) % 12];
+        }
+
+        function generateChords(root, type, maxStretch) {
+            const chordNotes = getChordNotes(root, type);
+            const validChords = [];
+
+            for (let f3 = 0; f3 <= 12; f3++) {
+                const n3 = getNoteAtFret(TUNING[0], f3);
+                if (!chordNotes.includes(n3)) continue;
+
+                for (let f2 = 0; f2 <= 12; f2++) {
+                    const n2 = getNoteAtFret(TUNING[1], f2);
+                    if (!chordNotes.includes(n2)) continue;
+
+                    for (let f1 = 0; f1 <= 12; f1++) {
+                        const n1 = getNoteAtFret(TUNING[2], f1);
+                        if (!chordNotes.includes(n1)) continue;
+
+                        const uniqueNotesInCombination = new Set([n1, n2, n3]);
+                        let isValidComposition = false;
+
+                        if (chordNotes.length === 3) {
+                            isValidComposition = chordNotes.every(note => uniqueNotesInCombination.has(note));
+                        } else {
+                            const vitalNotes = [chordNotes[0], chordNotes[1], chordNotes[3]];
+                            isValidComposition = vitalNotes.every(note => uniqueNotesInCombination.has(note));
+                        }
+
+                        if (!isValidComposition) continue;
+
+                        const activeFrets = [f3, f2, f1].filter(f => f > 0);
+                        if (activeFrets.length > 0) {
+                            const minFret = Math.min(...activeFrets);
+                            const maxFret = Math.max(...activeFrets);
+                            if (maxFret - minFret > maxStretch) continue;
+                        }
+
+                        const openCount = [f3, f2, f1].filter(f => f === 0).length;
+                        validChords.push({
+                            frets: [f3, f2, f1],
+                            openCount: openCount,
+                            minFret: activeFrets.length > 0 ? Math.min(...activeFrets) : 0
+                        });
+                    }
+                }
+            }
+
+            return sortChords(validChords);
+        }
+
+        function sortChords(chords) {
+            return chords.sort((a, b) => {
+                const firstA = a.frets[2];
+                const firstB = b.frets[2];
+                const thirdA = a.frets[0];
+                const thirdB = b.frets[0];
+
+                const getPriorityGroup = (fret) => {
+                    if (fret >= 1 && fret <= 5) return 1;
+                    if (fret === 0) return 2;
+                    return 3;
+                };
+
+                const pFirstA = getPriorityGroup(firstA);
+                const pFirstB = getPriorityGroup(firstB);
+                if (pFirstA !== pFirstB) {
+                    return pFirstA - pFirstB;
+                }
+
+                const pThirdA = getPriorityGroup(thirdA);
+                const pThirdB = getPriorityGroup(thirdB);
+                if (pThirdA !== pThirdB) {
+                    return pThirdA - pThirdB;
+                }
+
+                if (b.openCount !== a.openCount) {
+                    return b.openCount - a.openCount;
+                }
+
+                return a.minFret - b.minFret;
+            });
+        }
+
+        function drawChordSVG(frets) {
+            const activeFrets = frets.filter(f => f > 0);
+            let startFret = 1;
+            let endFret = 5;
+
+            if (activeFrets.length > 0) {
+                const maxFret = Math.max(...activeFrets);
+                const minFret = Math.min(...activeFrets);
+                if (maxFret > 5) {
+                    startFret = Math.max(1, minFret - 1);
+                    endFret = startFret + 4;
+                }
+            }
+
+            const width = 140;
+            const height = 230;
+            const fretCount = 5;
+            const stringSpacing = 45;
+            const fretSpacing = 46;
+            const startX = 25;
+            const startY = 45;
+
+            let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`;
+            const nutThickness = (startFret === 1) ? 5 : 2;
+            svg += `<line x1="${startX}" y1="${startY}" x2="${startX + stringSpacing * 2}" y2="${startY}" stroke="#000" stroke-width="${nutThickness}" />`;
+
+            for (let i = 1; i <= fretCount; i++) {
+                const y = startY + i * fretSpacing;
+                svg += `<line x1="${startX}" y1="${y}" x2="${startX + stringSpacing * 2}" y2="${y}" stroke="#aaa" stroke-width="1.5" />`;
+            }
+
+            for (let i = 0; i < 3; i++) {
+                const x = startX + i * stringSpacing;
+                svg += `<line x1="${x}" y1="${startY}" x2="${x}" y2="${startY + fretCount * fretSpacing}" stroke="#888" stroke-width="2" />`;
+            }
+
+            for (let i = 0; i < fretCount; i++) {
+                const currentFretNum = startFret + i;
+                const y = startY + (i * fretSpacing) + (fretSpacing / 2) + 5;
+                svg += `<text x="${startX - 15}" y="${y}" font-family="sans-serif" font-size="16" font-weight="bold" fill="#0b4e6c" text-anchor="middle">${currentFretNum}</text>`;
+            }
+
+            frets.forEach((fret, stringIdx) => {
+                const x = startX + stringIdx * stringSpacing;
+                if (fret === 0) {
+                    svg += `<circle cx="${x}" cy="${startY - 12}" r="5" fill="none" stroke="#0b4e6c" stroke-width="2" />`;
+                } else if (fret >= startFret && fret <= endFret) {
+                    const relativeFret = fret - startFret;
+                    const y = startY + (relativeFret * fretSpacing) + (fretSpacing / 2);
+                    svg += `<circle cx="${x}" cy="${y}" r="11" fill="#0b4e6c" />`;
+                }
+            });
+
+            svg += `</svg>`;
+            return svg;
+        }
+
+        function createCard(item) {
+            const card = document.createElement('article');
+            card.className = 'chord-card';
+
+            const title = document.createElement('h3');
+            title.textContent = item.label;
+            card.appendChild(title);
+
+            const diagram = document.createElement('div');
+            diagram.className = 'diagram';
+
+            const shape = generateChords(item.root, item.type, 4)[0];
+            if (shape) {
+                diagram.innerHTML = drawChordSVG(shape.frets);
+            } else {
+                diagram.innerHTML = '<div class="meta">No diagram available</div>';
+            }
+            card.appendChild(diagram);
+
+            const button = document.createElement('button');
+            button.className = 'save-btn';
+            button.textContent = 'Save PNG';
+                button.addEventListener('click', () => {
+                    // Export card as small PNG (approximately 300px wide)
+                    const exportCanvas = document.createElement('canvas');
+                    // Small card dimensions for thumbnails
+                    exportCanvas.width = 200;
+                    exportCanvas.height = 280;
+                    const ctx = exportCanvas.getContext('2d');
+
+                    // Background frame
+                    ctx.fillStyle = '#f4f7f6';
+                    ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+                    // Inner white card
+                    const margin = 10;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(margin, margin, exportCanvas.width - margin * 2, exportCanvas.height - margin * 2);
+
+                    // Title (chord name)
+                    ctx.fillStyle = '#0b4e6c';
+                    ctx.font = 'bold 20px Segoe UI';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(item.label, exportCanvas.width / 2, margin + 28);
+
+                    // Prepare SVG from diagram and draw it centered under the title
+                    // Diagram DOM contains an <svg> element; extract its inner SVG markup
+                    const innerSvg = diagram.querySelector('svg');
+                    // Ensure exported SVG has explicit width/height and viewBox
+                    let svgWidth = 250;
+                    let svgHeight = 260;
+                    let innerContent = '';
+                    if (innerSvg) {
+                        innerContent = innerSvg.innerHTML;
+                        const wAttr = innerSvg.getAttribute('width');
+                        const hAttr = innerSvg.getAttribute('height');
+                        const vb = innerSvg.getAttribute('viewBox');
+                        if (wAttr) svgWidth = parseInt(wAttr, 10) || svgWidth;
+                        if (hAttr) svgHeight = parseInt(hAttr, 10) || svgHeight;
+                        if (vb && !wAttr && !hAttr) {
+                            // try to parse viewBox to get width/height (viewBox="0 0 w h")
+                            const parts = vb.split(/\s+/);
+                            if (parts.length === 4) {
+                                svgWidth = parseInt(parts[2], 0) || svgWidth;
+                                svgHeight = parseInt(parts[3], 0) || svgHeight;
+                            }
+                        }
+                    }
+
+                    const svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">${innerContent}</svg>`;
+
+                    const svgBlob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
+                    const svgUrl = URL.createObjectURL(svgBlob);
+                    const img = new Image();
+
+                    img.onload = () => {
+                        // Scale diagram to fit nicely on the small card
+                        const maxWidth = exportCanvas.width; // take about 85% of canvas width
+                        const maxHeight = exportCanvas.height;
+                        const scale = Math.min(maxWidth / img.width, maxHeight / img.height, 1);
+                        const drawWidth = img.width * scale;
+                        const drawHeight = img.height * scale;
+                        const x = (exportCanvas.width - drawWidth) / 2;
+                        const y = margin + 10; // position under the title
+                        ctx.drawImage(img, x, y, drawWidth, drawHeight);
+
+                        // Create download link
+                        const link = document.createElement('a');
+                        document.body.appendChild(link);
+                        link.download = `${item.label}.png`;
+                        link.href = exportCanvas.toDataURL('image/png');
+                        link.click();
+                        link.remove();
+                        URL.revokeObjectURL(svgUrl);
+                    };
+
+                    img.onerror = () => {
+                        // Fallback: still offer PNG of blank card with title
+                        const link = document.createElement('a');
+                        document.body.appendChild(link);
+                        link.download = `${item.label}.png`;
+                        link.href = exportCanvas.toDataURL('image/png');
+                        link.click();
+                        link.remove();
+                        if (svgUrl) URL.revokeObjectURL(svgUrl);
+                    };
+
+                    img.src = svgUrl;
+            });
+            card.appendChild(button);
+
+            return card;
+        }
+
+        chordItems.forEach(item => {
+            grid.appendChild(createCard(item));
+        });
+    </script>
+</body>
+</html>
